@@ -70,6 +70,29 @@ export interface MatrixResponse {
   awaitingStackTags: boolean;
 }
 
+export type Role = "viewer" | "deployer" | "admin";
+
+export interface SessionUser {
+  email: string;
+  name?: string;
+  picture?: string;
+  role: Role;
+  /** Signed in through the local dev bypass rather than Google. */
+  dev: boolean;
+}
+
+export interface AuthState {
+  authenticated: boolean;
+  /** False when GOOGLE_CLIENT_ID / TOWER_SESSION_SECRET are unset. */
+  authConfigured: boolean;
+  devLogin: boolean;
+  domain: string;
+  defaultRole: Role;
+  user: SessionUser | null;
+  /** The API could not be reached at all. */
+  unreachable?: boolean;
+}
+
 /** What the server will and will not do, read once at startup. */
 export interface Health {
   ok: boolean;
@@ -78,6 +101,11 @@ export interface Health {
   region?: string;
   readOnly?: boolean;
   writesEnabled: boolean;
+  authConfigured?: boolean;
+  devLogin?: boolean;
+  authenticated?: boolean;
+  role?: Role;
+  email?: string;
   reason?: string;
   source: "live" | "mock";
 }

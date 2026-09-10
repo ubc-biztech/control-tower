@@ -3,7 +3,7 @@ import { HelpCircle, History, Terminal, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
 import { StatusTag } from "@/components/StatusTag";
-import { useRollbackBlockedReason } from "@/components/HealthProvider";
+import { useRollbackBlockedReason } from "@/components/SessionProvider";
 import type { Stage, StackState } from "@/lib/types";
 import { absTime, firstLine, relTime, shortSha } from "@/lib/format";
 

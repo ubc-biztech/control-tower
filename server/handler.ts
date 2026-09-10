@@ -7,13 +7,18 @@ import { recentLogs } from "./aws/logs.js";
 import { getStackResources } from "./aws/resources.js";
 import {
   ALLOW_ROLLBACK,
+  AUTH_CONFIGURED,
   CACHE_TTL_MS,
+  DEV_LOGIN_EMAIL,
   REGION,
   loadDeployables,
   stackNameFor,
   type Stage,
 } from "./config.js";
 import { ageOf, stale } from "./cache.js";
+import { handleAuthRoute } from "./auth/routes.js";
+import { AuthError, principalFor, requireRole } from "./auth/guard.js";
+import { audit } from "./audit.js";
 
 const STAGES = new Set(["dev", "staging", "prod"]);
 
@@ -40,6 +45,14 @@ export async function handleApi(req: IncomingMessage, res: ServerResponse): Prom
   try {
     await route(url, req, res);
   } catch (err) {
+    if (err instanceof AuthError) {
+      send(res, err.status, {
+        error: err.status === 401 ? "Unauthenticated" : "Forbidden",
+        message: err.message,
+        requiredRole: err.required,
+      });
+      return true;
+    }
     const e = err as { name?: string; message?: string; $metadata?: { httpStatusCode?: number } };
     const status = e.$metadata?.httpStatusCode ?? 500;
     // eslint-disable-next-line no-console
@@ -55,6 +68,11 @@ export async function handleApi(req: IncomingMessage, res: ServerResponse): Prom
 async function route(url: URL, req: IncomingMessage, res: ServerResponse) {
   const path = url.pathname;
 
+  /* ---- auth: /api/auth/* is the only unauthenticated surface ---------- */
+  if (path.startsWith("/api/auth/")) {
+    if (await handleAuthRoute(path, url, req, res)) return;
+  }
+
   /* ---- health / capabilities ---------------------------------------- */
   if (path === "/api/health") {
     if (!hasCredentials())
@@ -64,6 +82,18 @@ async function route(url: URL, req: IncomingMessage, res: ServerResponse) {
         region: REGION,
         writesEnabled: false,
       });
+    const principal = await principalFor(req);
+    if (!principal)
+      return send(res, 200, {
+        ok: true,
+        region: REGION,
+        readOnly: true,
+        writesEnabled: false,
+        authConfigured: AUTH_CONFIGURED,
+        devLogin: Boolean(DEV_LOGIN_EMAIL),
+        authenticated: false,
+      });
+
     const id = await sts.send(new GetCallerIdentityCommand({}));
     return send(res, 200, {
       ok: true,
@@ -72,9 +102,20 @@ async function route(url: URL, req: IncomingMessage, res: ServerResponse) {
       region: REGION,
       cacheTtlMs: CACHE_TTL_MS,
       readOnly: true,
+      // Writes need a deployer role AND a write path. Neither is enough alone,
+      // and the write path does not exist yet.
       writesEnabled: ALLOW_ROLLBACK,
+      authConfigured: AUTH_CONFIGURED,
+      devLogin: Boolean(DEV_LOGIN_EMAIL),
+      authenticated: true,
+      role: principal.role,
+      email: principal.email,
     });
   }
+
+  /* ---- everything below requires a signed-in viewer ------------------- */
+  const principal = await principalFor(req);
+  requireRole(principal, "viewer");
 
   /* ---- R1 version matrix -------------------------------------------- */
   if (path === "/api/matrix") {
@@ -141,6 +182,15 @@ async function route(url: URL, req: IncomingMessage, res: ServerResponse) {
   if (path === "/api/rollback") {
     if (req.method !== "POST")
       return send(res, 405, { error: "MethodNotAllowed", message: "POST only" });
+
+    // Authorization runs before anything else, so the allowlist is enforced
+    // now rather than when the write path is finally built.
+    const actor = requireRole(principal, "deployer");
+    audit("rollback.denied", {
+      email: actor.email,
+      role: actor.role,
+      reason: "write path not implemented",
+    });
     // This build has no write path at all. There is no workflow_dispatch call
     // in the tree, and no GitHub client is installed. Enabling the flag does
     // not change that — it only changes this message.

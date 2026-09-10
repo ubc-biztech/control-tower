@@ -8,7 +8,7 @@
  */
 import * as live from "./liveApi";
 import * as mock from "./mockApi";
-import type { Health } from "./types";
+import type { AuthState, Health } from "./types";
 
 export { ApiError } from "./ApiError";
 
@@ -25,6 +25,21 @@ export const getLogs = impl.getLogs;
 export const postRollback = impl.postRollback;
 export const getRollbackRun = impl.getRollbackRun;
 export const getStackFunctions = isMock ? null : live.getStackFunctions;
+
+export async function getSession(): Promise<AuthState> {
+  if (isMock)
+    return {
+      authenticated: true,
+      authConfigured: false,
+      devLogin: false,
+      domain: "ubcbiztech.com",
+      defaultRole: "admin",
+      user: { email: "mock@ubcbiztech.com", name: "Mock user", role: "admin", dev: true },
+    };
+  return live.getSession();
+}
+
+export const logout = isMock ? async () => {} : live.logout;
 
 export async function getHealth(): Promise<Health> {
   if (isMock)

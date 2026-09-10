@@ -15,7 +15,7 @@ import { Callout } from "@/components/ui/callout";
 import { CenteredSpinner } from "@/components/ui/spinner";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { StatusTag } from "@/components/StatusTag";
-import { useRollbackBlockedReason } from "@/components/HealthProvider";
+import { useRollbackBlockedReason } from "@/components/SessionProvider";
 import { getDeployments, getStackFunctions } from "@/lib/api";
 import type { Deployment, MatrixResponse, Stage } from "@/lib/types";
 import { STAGES, cellKey } from "@/lib/types";

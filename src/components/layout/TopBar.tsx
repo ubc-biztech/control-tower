@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Tooltip } from "@/components/ui/tooltip";
 import { isMock, isSimulatingOutage, setSimulateOutage } from "@/lib/api";
-import { useHealth } from "@/components/HealthProvider";
+import { useHealth } from "@/components/SessionProvider";
 import { relTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 

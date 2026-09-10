@@ -2,7 +2,9 @@ import { useCallback, useEffect, useState } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { HealthProvider } from "@/components/HealthProvider";
+import { SessionProvider, useSession } from "@/components/SessionProvider";
+import { LoginPage } from "@/pages/LoginPage";
+import { CenteredSpinner } from "@/components/ui/spinner";
 import { LogsDrawer } from "@/components/LogsDrawer";
 import { RollbackDialog, type RollbackTarget } from "@/components/RollbackDialog";
 import { EnvironmentsPage } from "@/pages/EnvironmentsPage";
@@ -17,6 +19,30 @@ import { Toaster, toast } from "@/components/ui/toast";
 const MATRIX_POLL_MS = 30_000;
 
 export default function App() {
+  return (
+    <TooltipProvider delayDuration={250}>
+      <SessionProvider>
+        <Authenticated />
+        <Toaster />
+      </SessionProvider>
+    </TooltipProvider>
+  );
+}
+
+function Authenticated() {
+  const { auth, loading } = useSession();
+
+  if (loading && !auth)
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <CenteredSpinner label="Signing you in…" />
+      </div>
+    );
+  if (!auth?.authenticated) return <LoginPage />;
+  return <ControlTower />;
+}
+
+function ControlTower() {
   const [matrix, setMatrix] = useState<MatrixResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -65,8 +91,7 @@ export default function App() {
   }, [refresh]);
 
   return (
-    <TooltipProvider delayDuration={250}>
-      <HealthProvider>
+    <>
       <AppLayout
         fetchedAt={matrix?.fetchedAt}
         stale={matrix?.stale}
@@ -127,8 +152,6 @@ export default function App() {
         onDispatched={() => void refresh()}
       />
 
-        <Toaster />
-      </HealthProvider>
-    </TooltipProvider>
+    </>
   );
 }

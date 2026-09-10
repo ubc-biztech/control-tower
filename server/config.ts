@@ -24,6 +24,8 @@ function loadDotEnv() {
 }
 loadDotEnv();
 
+import { parseAccessList, type AccessList } from "./auth/access.js";
+
 export interface Deployable {
   name: string;
   kind: "serverless";
@@ -46,6 +48,34 @@ export const REGION = process.env.AWS_REGION || "us-west-2";
 export const ALLOW_ROLLBACK = process.env.TOWER_ALLOW_ROLLBACK === "true";
 
 export const CACHE_TTL_MS = Number(process.env.TOWER_CACHE_TTL_MS ?? 30_000);
+
+export const IS_PRODUCTION = process.env.NODE_ENV === "production";
+
+/* ---- auth ---------------------------------------------------------- */
+
+export const SESSION_SECRET = process.env.TOWER_SESSION_SECRET ?? "";
+
+export const GOOGLE = {
+  clientId: process.env.GOOGLE_CLIENT_ID ?? "",
+  clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
+  redirectUri: process.env.GOOGLE_REDIRECT_URI ?? "http://localhost:5273/api/auth/callback",
+};
+
+export const AUTH_CONFIGURED = Boolean(
+  GOOGLE.clientId && GOOGLE.clientSecret && SESSION_SECRET,
+);
+
+/**
+ * Signs in as a fixed email without Google, so the authorization layer can be
+ * exercised before OAuth credentials exist. Refuses to work in production.
+ */
+export const DEV_LOGIN_EMAIL = IS_PRODUCTION ? "" : (process.env.TOWER_DEV_LOGIN_EMAIL ?? "");
+
+/** Read fresh on every request, so merging a PR revokes access immediately. */
+export function loadAccessList(): AccessList {
+  const path = resolve(here, "../access.json");
+  return parseAccessList(JSON.parse(readFileSync(path, "utf8")));
+}
 
 export function loadDeployables(): Deployable[] {
   const path = resolve(here, "../src/data/deployables.json");

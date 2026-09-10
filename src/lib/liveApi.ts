@@ -7,6 +7,7 @@
  */
 import { ApiError } from "./ApiError";
 import type {
+  AuthState,
   Deployment,
   Health,
   LogsResponse,
@@ -18,18 +19,34 @@ import type {
 async function get<T>(path: string, init?: RequestInit): Promise<T> {
   let res: Response;
   try {
-    res = await fetch(path, { ...init, headers: { accept: "application/json" } });
+    res = await fetch(path, {
+      ...init,
+      credentials: "same-origin",
+      headers: { accept: "application/json" },
+    });
   } catch {
     throw new ApiError(0, "Control Tower's API is not reachable. Is `npm run dev` running?");
   }
   const body = await res.json().catch(() => ({}));
   if (!res.ok) {
+    // Tell the session layer the cookie is gone, so the app shows the login
+    // screen instead of an error on every panel.
+    if (res.status === 401)
+      window.dispatchEvent(new CustomEvent("control-tower:unauthenticated"));
     throw new ApiError(
       res.status,
       (body as { message?: string }).message ?? `${res.status} ${res.statusText}`,
     );
   }
   return body as T;
+}
+
+export async function getSession(): Promise<AuthState> {
+  return get<AuthState>("/api/auth/me");
+}
+
+export async function logout(): Promise<void> {
+  await get("/api/auth/logout");
 }
 
 export async function getHealth(): Promise<Health> {

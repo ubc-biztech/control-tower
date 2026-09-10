@@ -5,7 +5,7 @@ nothing.**
 
 ```
 npm install
-cp .env.example .env     # add AWS credentials
+cp .env.example .env     # add AWS credentials + Google OAuth
 npm run dev              # http://localhost:5273
 ```
 
@@ -26,7 +26,8 @@ VITE_TOWER_DATA_SOURCE=mock npm run dev
 | R1 | **Environments** — service × environment matrix from CloudFormation stack tags, plus stacks in the account no deployable claims | **Live** |
 | R1.5 | **Deployment history** — the last 5 artifacts from each stack's deployment bucket | **Live** |
 | R3 | **Logs** — last 10 minutes across every Lambda in a stack, discovered from stack resources, filter, 10s auto-refresh, console + Insights deep links | **Live** |
-| R2 | **Rollback** — the confirm dialog exists and shows real from → to, but the button is disabled and the route returns 501 | **Not built** — it is the write path |
+| R2 | **Rollback** — the confirm dialog shows real from → to, but the button is disabled and the route returns 501 | **Not built** — it is the write path |
+| R6 | **Auth** — Google sign-in restricted to `@ubcbiztech.com`, roles from `access.json`, enforced server-side | **Live** |
 
 Plus a per-environment view (one stage, every service), a **Services** inventory
 showing that adding a deployable is a config entry (R9.3), and a left rail with
@@ -39,10 +40,19 @@ the v1 sections greyed out.
 - **No rollback.** `POST /api/rollback` returns 501; the UI disables the button
   and says why. Rollback belongs in GitHub Actions (R2.3) and needs open
   question 10.2 answered first.
-- **No auth.** Single user, no login. That is R6, v1.
+- **No rollback**, so the deployer role currently gates a route that returns 501.
 - **No database, no log storage.** State is AWS. The cache is in memory with a
   30-second TTL.
 - It does not touch `serverless-biztechapp` or `bt-web-v2`.
+
+## Access
+
+Sign-in needs a verified `@ubcbiztech.com` Google account. Everyone on the
+domain gets `viewer` — read-only. Write access requires an entry in
+[`access.json`](access.json), so granting it is a pull request and revoking it
+is a pull request; roles are re-read on every request, not baked into the
+session. Full detail, including how to set up the OAuth client and how to work
+without one, is in **[docs/auth.md](docs/auth.md)**.
 
 ## Read this before running it against AWS
 
@@ -60,6 +70,7 @@ src/
   App.tsx                          routes, shared matrix state, drawer/dialog wiring
 
   components/
+    SessionProvider.tsx            who is signed in, and what they may do
     layout/
       AppLayout.tsx                sidebar + top bar + routed page
       Sidebar.tsx                  the left navigation rail
@@ -75,6 +86,7 @@ src/
                                    tooltip, table, callout, spinner, toast
 
   pages/
+    LoginPage.tsx                  shown instead of the app when signed out
     EnvironmentsPage.tsx           home: the service x environment matrix (R1)
     EnvironmentDetailPage.tsx      one stage, every service
     ServiceDetailPage.tsx          one service on one stage: deployment history
@@ -108,9 +120,16 @@ as middleware, so `npm run dev` is one process, and standalone via
 
 ```
 server/
-  handler.ts        the routes
-  config.ts         env, .env loading, deployable inventory
+  handler.ts        the routes, and the authorization gate on each
+  config.ts         env, .env loading, deployable inventory, access list
   cache.ts          30s TTL, collapses concurrent misses
+  audit.ts          append-only record of auth and denied writes
+  auth/
+    access.ts       roles and the domain rule. Pure, no deps, extractable.
+    guard.ts        principalFor() / requireRole()
+    google.ts       OAuth code+PKCE flow and ID token verification
+    routes.ts       /api/auth/login | callback | logout | me
+    session.ts      signed httpOnly cookie
   aws/
     clients.ts      the read-only boundary
     stacks.ts       GET /api/matrix
@@ -126,7 +145,9 @@ server/
 | `GET /api/deployments?service=&stage=` | `ListStackResources` → `ListObjectsV2` |
 | `GET /api/logs?service=&stage=&filter=` | `ListStackResources` → `FilterLogEvents` per group |
 | `GET /api/functions?service=&stage=` | `ListStackResources` |
-| `POST /api/rollback` | nothing — returns 501 |
+| `POST /api/rollback` | nothing — checks the deployer role, then returns 501 |
+
+Everything except `/api/health` and `/api/auth/*` requires a session.
 
 The whole matrix costs one `DescribeStacks` pagination rather than 60 named
 lookups, because that call returns every stack with its tags.

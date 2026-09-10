@@ -1,0 +1,30 @@
+{
+  "$comment": [
+    "Who can use BizTech Control Tower, and what they may do.",
+    "Signing in at all requires a verified @ubcbiztech.com Google account —",
+    "the same rule bt-web-v2 uses to decide admin (src/queries/user.ts).",
+    "",
+    "Anyone in the domain who is not listed below gets 'viewer': read-only.",
+    "Write access — rollback, and every mutation added later — requires an",
+    "explicit entry here. Granting access is a pull request, and revoking it",
+    "is a pull request. There is no admin UI on purpose: the audit trail is",
+    "git history.",
+    "",
+    "Roles: viewer < deployer < admin",
+    "  viewer    read everything. The default for the domain.",
+    "  deployer  roll back a service on any environment.",
+    "  admin     everything a deployer can do, plus future settings.",
+    "",
+    "Emails are compared lowercased. Add a 'note' saying who someone is and",
+    "which term they hold the role for, so the next exec knows what to prune."
+  ],
+  "domain": "ubcbiztech.com",
+  "defaultRole": "viewer",
+  "users": [
+    {
+      "email": "dev@ubcbiztech.com",
+      "role": "admin",
+      "note": "dev team lead — 2026/27"
+    }
+  ]
+}

@@ -27,7 +27,7 @@ import { ApiError, getDeployments, getRollbackRun, postRollback } from "@/lib/ap
 import type { Deployment, RollbackRun, Stage } from "@/lib/types";
 import { absTime, bytes, firstLine, relTime, shortSha } from "@/lib/format";
 import { DEPLOYABLES } from "@/mock/world";
-import { useRollbackBlockedReason } from "@/components/HealthProvider";
+import { useRollbackBlockedReason } from "@/components/SessionProvider";
 import { cn } from "@/lib/utils";
 
 export interface RollbackTarget {

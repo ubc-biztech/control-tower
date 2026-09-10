@@ -10,11 +10,13 @@ import {
   Settings,
   ShieldCheck,
   Terminal,
+  LogOut,
   User,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { isMock } from "@/lib/api";
-import { useHealth } from "@/components/HealthProvider";
+import { useHealth, useCurrentUser } from "@/components/SessionProvider";
+import { logout } from "@/lib/api";
 import { STAGES } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -169,26 +171,63 @@ function SidebarPlaceholder({
   );
 }
 
+const ROLE_TONE: Record<string, "green" | "blue" | "gray"> = {
+  admin: "blue",
+  deployer: "green",
+  viewer: "gray",
+};
+
 function AccountBlock() {
   const health = useHealth();
+  const user = useCurrentUser();
+
   return (
     <div className="border-t border-rail-line px-4 py-3">
       <div className="flex items-center gap-2">
-        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-rail-line">
-          <User className="h-3.5 w-3.5 text-rail-text" />
-        </div>
+        {user?.picture ? (
+          <img src={user.picture} alt="" className="h-6 w-6 shrink-0 rounded-full" />
+        ) : (
+          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-rail-line">
+            <User className="h-3.5 w-3.5 text-rail-text" />
+          </div>
+        )}
         <div className="min-w-0 leading-tight">
-          <div className="truncate text-[12px] text-white">dev@ubcbiztech.com</div>
-          <div className="text-[10px] text-rail-muted">single-user · v0 has no auth</div>
+          <div className="truncate text-[12px] text-white">{user?.email ?? "not signed in"}</div>
+          <div className="flex items-center gap-1.5 text-[10px] text-rail-muted">
+            {user ? (
+              <>
+                <span className="uppercase tracking-[0.06em]">{user.role}</span>
+                {user.role === "viewer" && <span>· read-only</span>}
+                {user.dev && <span>· dev login</span>}
+              </>
+            ) : (
+              "—"
+            )}
+          </div>
         </div>
+        {user && !user.dev && (
+          <button
+            title="Sign out"
+            onClick={async () => {
+              await logout();
+              window.location.reload();
+            }}
+            className="ml-auto shrink-0 rounded p-1 text-rail-muted transition-colors hover:bg-rail-hover hover:text-white"
+          >
+            <LogOut className="h-3.5 w-3.5" />
+          </button>
+        )}
       </div>
       <div className="mono mt-2.5 text-[10px] leading-relaxed text-rail-muted">
         <div>acct {health?.account ?? "—"}</div>
         <div>{health?.region ?? "—"}</div>
       </div>
-      <Badge tone={isMock ? "amber" : "green"} className="mt-2">
-        {isMock ? "P0 · mock data" : "live · read-only"}
-      </Badge>
+      <div className="mt-2 flex flex-wrap gap-1.5">
+        <Badge tone={isMock ? "amber" : "green"}>
+          {isMock ? "mock data" : "live · read-only"}
+        </Badge>
+        {user && <Badge tone={ROLE_TONE[user.role] ?? "gray"}>{user.role}</Badge>}
+      </div>
     </div>
   );
 }
