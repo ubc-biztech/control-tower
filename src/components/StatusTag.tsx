@@ -1,13 +1,14 @@
-import { Spinner, Tag, type Intent } from "@blueprintjs/core";
+import { Loader2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import type { CellStatus } from "@/lib/types";
 
-const MAP: Record<CellStatus, { label: string; intent: Intent; minimal?: boolean }> = {
-  current: { label: "current", intent: "success" },
-  behind: { label: "behind", intent: "warning" },
-  failed: { label: "failed", intent: "danger" },
-  "rolling-back": { label: "rolling back", intent: "primary" },
-  unknown: { label: "unknown", intent: "none" },
-  absent: { label: "no deploys", intent: "none", minimal: true },
+const MAP: Record<CellStatus, { label: string; tone: "green" | "amber" | "red" | "blue" | "gray" }> = {
+  current: { label: "current", tone: "green" },
+  behind: { label: "behind", tone: "amber" },
+  failed: { label: "failed", tone: "red" },
+  "rolling-back": { label: "rolling back", tone: "blue" },
+  unknown: { label: "unknown", tone: "gray" },
+  absent: { label: "no deploys", tone: "gray" },
 };
 
 export function StatusTag({
@@ -21,17 +22,12 @@ export function StatusTag({
 }) {
   const cfg = MAP[status];
   const label =
-    status === "behind" && behindBy
-      ? `${behindBy} behind ${behindOf ?? ""}`.trim()
-      : cfg.label;
+    status === "behind" && behindBy ? `${behindBy} behind ${behindOf ?? ""}`.trim() : cfg.label;
 
   return (
-    <Tag
-      intent={cfg.intent}
-      minimal={cfg.minimal ?? status !== "current"}
-      icon={status === "rolling-back" ? <Spinner size={10} /> : undefined}
-    >
+    <Badge tone={cfg.tone}>
+      {status === "rolling-back" && <Loader2 className="h-2.5 w-2.5 animate-spin" />}
       {label}
-    </Tag>
+    </Badge>
   );
 }

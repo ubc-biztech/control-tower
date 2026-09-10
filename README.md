@@ -25,8 +25,9 @@ services across `dev` / `staging` / `prod`:
 | R2 | **Rollback** — confirm dialog with from → to, reason, the exact command, then a live run progress panel | UI complete, simulated Actions run |
 | R3 | **Logs** — merged last-10-minute stream across every Lambda in a stack, filter, 10s auto-refresh, console + Insights deep links | UI complete, generated events |
 
-Plus a **Services** inventory view showing that adding a deployable is a config
-entry (R9.3), and a left rail with the v1 sections greyed out.
+Plus a per-environment view (one stage, every service), a **Services** inventory
+showing that adding a deployable is a config entry (R9.3), and a left rail with
+the v1 sections greyed out.
 
 ## What this build does **not** do
 
@@ -99,7 +100,19 @@ them from `ListStackResources`.)
 
 ## Design
 
-Palantir Apollo, via Blueprint 5 dark with the surfaces pushed darker and the
-radii flattened. Tailwind for layout only. Monospace for SHAs, timestamps, stack
-names, and log lines. Status is a colored `Tag`; actions live in the row they act
-on. The logo and favicon are BizTech's, lifted from `bt-web-v2`.
+**Same component stack as `bt-web-v2`** — shadcn/ui conventions (Radix
+primitives + `class-variance-authority` + a `cn()` of `clsx`/`tailwind-merge`),
+`lucide-react` icons, Urbanist, and shadcn's HSL CSS-variable tokens. The
+primitives live in `src/components/ui/` and are written the same way bt-web-v2
+writes its own, so anything here can move between the two repos.
+
+**Coloured and laid out like Palantir Apollo**: a dark navy left rail against a
+near-white content area, hairline borders, 4px radii, no shadows outside
+overlays, and dense tables rather than cards. The rail's navy is BizTech's own
+`bt-blue-600`, so it reads as ours rather than as a copy. Monospace for SHAs,
+timestamps, stack names, and log lines; status is a soft-filled `Badge`; actions
+live in the row they act on. The logo and favicon are lifted from `bt-web-v2`.
+
+There is no Blueprint.js. The requirements suggested it, but matching bt-web-v2's
+stack matters more than the shortcut, and Apollo's look is a palette and a
+layout, not a component library.

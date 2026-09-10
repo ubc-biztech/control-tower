@@ -1,15 +1,17 @@
 import { useCallback, useEffect, useState } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { Shell } from "@/components/Shell";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { LogsDrawer } from "@/components/LogsDrawer";
 import { RollbackDialog, type RollbackTarget } from "@/components/RollbackDialog";
 import { MatrixPage } from "@/pages/Matrix";
+import { EnvironmentPage } from "@/pages/Environment";
 import { ServiceDetailPage } from "@/pages/ServiceDetail";
 import { ServicesPage } from "@/pages/Services";
 import { LogsPage } from "@/pages/Logs";
 import { getMatrix } from "@/lib/api";
 import type { MatrixResponse, Stage } from "@/lib/types";
-import { toast } from "@/lib/toaster";
+import { Toaster, toast } from "@/components/ui/toast";
 
 const MATRIX_POLL_MS = 30_000;
 
@@ -55,16 +57,14 @@ export default function App() {
   const onRollbackCompleted = useCallback(() => {
     void refresh();
     setReloadToken((n) => n + 1);
-    void toast({
-      intent: "success",
-      icon: "tick-circle",
+    toast({
+      tone: "success",
       message: "Rollback completed. Deployment history updated.",
-      timeout: 6000,
     });
   }, [refresh]);
 
   return (
-    <>
+    <TooltipProvider delayDuration={250}>
       <Shell
         fetchedAt={matrix?.fetchedAt}
         stale={matrix?.stale}
@@ -79,6 +79,17 @@ export default function App() {
                 data={matrix}
                 loading={loading}
                 error={error}
+                onLogs={openLogs}
+                onRollback={openRollback}
+              />
+            }
+          />
+          <Route
+            path="/environment/:stage"
+            element={
+              <EnvironmentPage
+                matrix={matrix}
+                loading={loading}
                 onLogs={openLogs}
                 onRollback={openRollback}
               />
@@ -113,6 +124,8 @@ export default function App() {
         onCompleted={onRollbackCompleted}
         onDispatched={() => void refresh()}
       />
-    </>
+
+      <Toaster />
+    </TooltipProvider>
   );
 }

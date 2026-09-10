@@ -21,6 +21,20 @@ deliberate departures, all directed:
    commit. The repo was read (service names and function keys) and nothing else.
    There is an event running; the instruction was to leave prod alone entirely.
 
+## UI stack
+
+The requirements name Blueprint.js (§6) on the grounds that Apollo is built on
+it. This build does not use it. Matching `bt-web-v2` is worth more than the
+shortcut: Tower uses the same shadcn/ui conventions that repo already uses —
+Radix primitives, `class-variance-authority`, a `cn()` over `clsx` and
+`tailwind-merge`, `lucide-react`, Urbanist, shadcn's HSL token variables — so
+components can move between the two repos and anyone who has worked on the
+website can work on Tower.
+
+Apollo's look is reproduced as a palette and a layout rather than a component
+library: dark navy rail against near-white content, hairline borders, 4px radii,
+tables over cards. The rail uses BizTech's own `bt-blue-600`.
+
 ## Still unverified — blocks real v0
 
 These are the brief's Step 0 checks. None have been run, and the first is a

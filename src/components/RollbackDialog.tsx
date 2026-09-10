@@ -1,26 +1,37 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  AnchorButton,
-  Button,
-  Callout,
-  Classes,
+  Check,
+  CircleDot,
+  Circle,
+  ExternalLink,
+  HelpCircle,
+  Loader2,
+  Minus,
+  Undo2,
+  X,
+} from "lucide-react";
+import {
   Dialog,
   DialogBody,
+  DialogContent,
   DialogFooter,
-  Icon,
-  InputGroup,
-  Spinner,
-  Tag,
-} from "@blueprintjs/core";
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Callout } from "@/components/ui/callout";
+import { CenteredSpinner } from "@/components/ui/spinner";
 import { TowerApiError, getDeployments, getRollbackRun, postRollback } from "@/lib/api";
 import type { Deployment, RollbackRun, Stage } from "@/lib/types";
 import { absTime, bytes, firstLine, relTime, shortSha } from "@/lib/format";
 import { DEPLOYABLES } from "@/mock/world";
+import { cn } from "@/lib/utils";
 
 export interface RollbackTarget {
   service: string;
   stage: Stage;
-  /** Preselected artifact, when launched from a history row. */
   timestamp?: string;
 }
 
@@ -57,10 +68,11 @@ export function RollbackDialog({
         setDeployments(d);
         setSelected((prev) => prev ?? d.find((x) => !x.current)?.timestamp ?? null);
       })
-      .catch((e) => setError({ msg: e instanceof Error ? e.message : "Failed to load deployments" }));
+      .catch((e) =>
+        setError({ msg: e instanceof Error ? e.message : "Failed to load deployments" }),
+      );
   }, [target]);
 
-  // Poll the (mock) Actions run until it finishes.
   useEffect(() => {
     if (!run || run.status === "completed") return;
     pollRef.current = window.setInterval(async () => {
@@ -78,10 +90,7 @@ export function RollbackDialog({
   }, [run, onCompleted]);
 
   const current = useMemo(() => deployments?.find((d) => d.current) ?? null, [deployments]);
-  const candidates = useMemo(
-    () => (deployments ?? []).filter((d) => !d.current),
-    [deployments],
-  );
+  const candidates = useMemo(() => (deployments ?? []).filter((d) => !d.current), [deployments]);
 
   const isProd = target?.stage === "prod";
   const servicePath = target ? servicePathFor(target.service) : "";
@@ -107,207 +116,175 @@ export function RollbackDialog({
     }
   };
 
+  const locked = Boolean(run && run.status !== "completed");
+
   return (
-    <Dialog
-      isOpen={open}
-      onClose={onClose}
-      canOutsideClickClose={!run || run.status === "completed"}
-      style={{ width: 720 }}
-      icon={run ? "cloud-upload" : "undo"}
-      title={
-        <span className="flex items-center gap-2">
-          <span>{run ? "Rollback dispatched" : "Roll back"}</span>
-          <span className="mono text-[13px]">{target?.service}</span>
-          <span style={{ color: "var(--tower-dimmer)" }}>on</span>
-          <Tag intent={isProd ? "danger" : "primary"} minimal={!isProd}>
-            {target?.stage}
-          </Tag>
-        </span>
-      }
-    >
-      <DialogBody>
-        {run ? (
-          <RunProgress run={run} />
-        ) : !deployments ? (
-          <div className="py-10 text-center">
-            <Spinner size={22} />
-          </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-[52px_1fr] gap-x-3 gap-y-3">
-              <Label>From</Label>
-              <DeployLine d={current} emphasis />
+    <Dialog open={open} onOpenChange={(v) => !v && !locked && onClose()}>
+      <DialogContent hideClose={locked} onEscapeKeyDown={(e) => locked && e.preventDefault()}>
+        <DialogHeader>
+          <DialogTitle>
+            {run ? "Rollback dispatched" : "Roll back"}
+            <span className="mono text-[14px]">{target?.service}</span>
+            <span className="font-normal text-muted-foreground">on</span>
+            <Badge tone={isProd ? "red" : "blue"}>{target?.stage}</Badge>
+          </DialogTitle>
+        </DialogHeader>
 
-              <Label>To</Label>
-              <div>
-                {candidates.length === 0 ? (
-                  <Callout intent="warning" icon="warning-sign" compact>
-                    No earlier artifact in the deployment bucket. Serverless keeps only the
-                    last 5 packages per stack.
-                  </Callout>
-                ) : (
-                  <div
-                    className="overflow-hidden rounded-[2px] border"
-                    style={{ borderColor: "var(--tower-edge)" }}
-                  >
-                    {candidates.map((d) => (
-                      <button
-                        key={d.timestamp}
-                        onClick={() => setSelected(d.timestamp)}
-                        className="flex w-full items-start gap-2.5 border-b px-2.5 py-2 text-left last:border-b-0 hover:bg-white/5"
-                        style={{
-                          borderColor: "var(--tower-edge-soft)",
-                          background:
-                            selected === d.timestamp ? "rgba(112,228,66,0.08)" : "transparent",
-                        }}
-                      >
-                        <Icon
-                          icon={selected === d.timestamp ? "selection" : "circle"}
-                          size={12}
-                          className="mt-[3px]"
-                          color={selected === d.timestamp ? "#70e442" : "#4a535d"}
-                        />
-                        <div className="min-w-0 flex-1">
-                          <DeployLine d={d} />
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
+        <DialogBody>
+          {run ? (
+            <RunProgress run={run} />
+          ) : !deployments ? (
+            <CenteredSpinner label="Reading the deployment bucket…" />
+          ) : (
+            <>
+              <div className="grid grid-cols-[58px_1fr] gap-x-3 gap-y-4">
+                <Label>From</Label>
+                <DeployLine d={current} emphasis />
+
+                <Label>To</Label>
+                <div>
+                  {candidates.length === 0 ? (
+                    <Callout tone="warning">
+                      No earlier artifact in the deployment bucket. Serverless keeps only the last 5
+                      packages per stack.
+                    </Callout>
+                  ) : (
+                    <div className="divide-y divide-border overflow-hidden rounded border border-border">
+                      {candidates.map((d) => {
+                        const active = selected === d.timestamp;
+                        return (
+                          <button
+                            key={d.timestamp}
+                            onClick={() => setSelected(d.timestamp)}
+                            className={cn(
+                              "flex w-full items-start gap-2.5 px-2.5 py-2 text-left transition-colors",
+                              active ? "bg-status-blue-bg" : "bg-card hover:bg-secondary",
+                            )}
+                          >
+                            {active ? (
+                              <CircleDot className="mt-[3px] h-3.5 w-3.5 shrink-0 text-primary" />
+                            ) : (
+                              <Circle className="mt-[3px] h-3.5 w-3.5 shrink-0 text-muted-foreground/50" />
+                            )}
+                            <div className="min-w-0 flex-1">
+                              <DeployLine d={d} />
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                <Label>Reason</Label>
+                <Input
+                  placeholder="optional — shows in the deployment history and the run summary"
+                  value={reason}
+                  onChange={(e) => setReason(e.currentTarget.value)}
+                />
               </div>
 
-              <Label>Reason</Label>
-              <InputGroup
-                small
-                placeholder="optional — shows in the deployment history and the run summary"
-                value={reason}
-                onChange={(e) => setReason(e.currentTarget.value)}
-              />
-            </div>
-
-            <Callout className="!mt-4" icon="git-branch" compact>
-              <div className="text-[11.5px]">
-                This triggers <code className={Classes.CODE}>rollback.yml</code> in GitHub Actions
-                on <span className="mono">ubc-biztech/serverless-biztechapp</span>. Tower never
-                runs the Serverless CLI and never writes to AWS. ~2 minutes.
-              </div>
-              <pre
-                className="mono !mb-0 !mt-2 overflow-x-auto rounded-[2px] p-2 text-[11px]"
-                style={{ background: "#0b0e12", color: "var(--tower-dim)" }}
-              >
+              <Callout tone="neutral" icon={false} className="mt-4">
+                <div className="text-[11.5px] leading-relaxed">
+                  This triggers <code className="mono rounded bg-white px-1 py-[1px] text-[11px]">rollback.yml</code>{" "}
+                  in GitHub Actions on{" "}
+                  <span className="mono">ubc-biztech/serverless-biztechapp</span>. Tower never runs
+                  the Serverless CLI and never writes to AWS. Takes about 2 minutes.
+                </div>
+                <pre className="mono mt-2 overflow-x-auto rounded border border-border bg-[#0D172C] px-2.5 py-2 text-[11px] leading-relaxed text-[#A2B1D5]">
 {`cd services/${servicePath} && npx sls rollback \\
   --stage ${target?.stage} --timestamp ${selected ?? "<pick one>"} --conceal`}
-              </pre>
-            </Callout>
-
-            {isProd && (
-              <Callout className="!mt-2" intent="danger" icon="warning-sign" compact>
-                This redeploys a stored artifact to <b>production</b>. Traffic shifts as soon as
-                the stack finishes updating.
+                </pre>
               </Callout>
-            )}
 
-            {error && (
-              <Callout className="!mt-2" intent="danger" icon="error" title={error.msg} compact>
-                {error.detail && (
-                  <a href={error.detail} target="_blank" rel="noreferrer">
-                    View the run in progress
-                  </a>
-                )}
-              </Callout>
-            )}
-          </>
-        )}
-      </DialogBody>
+              {isProd && (
+                <Callout tone="danger" className="mt-2">
+                  This redeploys a stored artifact to <b>production</b>. Traffic shifts as soon as
+                  the stack finishes updating.
+                </Callout>
+              )}
 
-      <DialogFooter
-        minimal
-        actions={
-          run ? (
+              {error && (
+                <Callout tone="danger" className="mt-2" title={error.msg}>
+                  {error.detail && (
+                    <a href={error.detail} target="_blank" rel="noreferrer" className="text-primary hover:underline">
+                      View the run in progress
+                    </a>
+                  )}
+                </Callout>
+              )}
+            </>
+          )}
+        </DialogBody>
+
+        <DialogFooter>
+          {run ? (
             <>
-              <AnchorButton
-                icon="share"
-                href={run.runUrl}
-                target="_blank"
-                text="Open Actions run"
-              />
-              <Button
-                intent="primary"
-                onClick={onClose}
-                disabled={run.status !== "completed"}
-                text={run.status === "completed" ? "Done" : "Running…"}
-              />
+              <Button variant="default" asChild>
+                <a href={run.runUrl} target="_blank" rel="noreferrer">
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  Open Actions run
+                </a>
+              </Button>
+              <Button variant="primary" onClick={onClose} disabled={run.status !== "completed"}>
+                {run.status === "completed" ? "Done" : "Running…"}
+              </Button>
             </>
           ) : (
             <>
-              <Button text="Cancel" onClick={onClose} />
+              <Button variant="default" onClick={onClose}>
+                Cancel
+              </Button>
               <Button
-                intent={isProd ? "danger" : "primary"}
-                icon="undo"
+                variant={isProd ? "danger" : "primary"}
                 loading={submitting}
                 disabled={!selected || !deployments}
                 onClick={confirm}
-                text={`Roll back ${target?.stage.toUpperCase()}`}
-              />
+              >
+                {!submitting && <Undo2 className="h-3.5 w-3.5" />}
+                Roll back {target?.stage.toUpperCase()}
+              </Button>
             </>
-          )
-        }
-      />
+          )}
+        </DialogFooter>
+      </DialogContent>
     </Dialog>
   );
 }
 
 function Label({ children }: { children: string }) {
-  return (
-    <div
-      className="pt-[3px] text-[10px] font-bold tracking-[0.09em]"
-      style={{ color: "var(--tower-dim)" }}
-    >
-      {children.toUpperCase()}
-    </div>
-  );
+  return <div className="eyebrow pt-[5px] text-muted-foreground">{children}</div>;
 }
 
 function DeployLine({ d, emphasis }: { d: Deployment | null; emphasis?: boolean }) {
-  if (!d) return <span style={{ color: "var(--tower-dimmer)" }}>—</span>;
+  if (!d) return <span className="text-muted-foreground">—</span>;
   return (
     <div className="min-w-0">
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         {d.git ? (
           <>
-            <span className="mono text-[12.5px]" style={{ color: emphasis ? "#fff" : "#d3d8de" }}>
+            <span className={cn("mono text-[12.5px] font-medium", emphasis && "text-foreground")}>
               {shortSha(d.git.sha)}
             </span>
             <span className="truncate text-[12px]">{firstLine(d.git.message, 62)}</span>
           </>
         ) : (
           <>
-            <Tag minimal intent="none" icon="help">
+            <Badge tone="gray">
+              <HelpCircle className="h-2.5 w-2.5" />
               no git metadata
-            </Tag>
+            </Badge>
             <span className="mono text-[12px]">{absTime(d.datetime)}</span>
           </>
         )}
-        {d.kind === "rollback" && (
-          <Tag minimal intent="warning">
-            rollback
-          </Tag>
-        )}
-        {d.status === "failed" && (
-          <Tag minimal intent="danger">
-            failed
-          </Tag>
-        )}
+        {d.kind === "rollback" && <Badge tone="amber">rollback</Badge>}
+        {d.status === "failed" && <Badge tone="red">failed</Badge>}
       </div>
-      <div className="mono mt-[2px] text-[11px]" style={{ color: "var(--tower-dimmer)" }}>
+      <div className="mono mt-[2px] text-[11px] text-muted-foreground">
         deployed {relTime(d.datetime)} ago by {d.actor}
         {d.git ? ` · run #${d.git.runNumber}` : ""} · {bytes(d.sizeBytes)} · ts {d.timestamp}
       </div>
-      {d.reason && (
-        <div className="mt-[2px] text-[11px] italic" style={{ color: "var(--tower-dim)" }}>
-          “{d.reason}”
-        </div>
-      )}
+      {d.reason && <div className="mt-[2px] text-[11px] italic text-muted-foreground">“{d.reason}”</div>}
     </div>
   );
 }
@@ -315,41 +292,33 @@ function DeployLine({ d, emphasis }: { d: Deployment | null; emphasis?: boolean 
 function RunProgress({ run }: { run: RollbackRun }) {
   return (
     <div>
-      <div className="mb-3 flex items-center gap-2">
+      <div className="mb-3 flex flex-wrap items-center gap-2">
         {run.status === "completed" ? (
-          <Tag intent={run.conclusion === "success" ? "success" : "danger"} large>
-            {run.conclusion}
-          </Tag>
+          <Badge tone={run.conclusion === "success" ? "green" : "red"}>{run.conclusion}</Badge>
         ) : (
-          <Tag intent="primary" large icon={<Spinner size={12} />}>
+          <Badge tone="blue">
+            <Loader2 className="h-2.5 w-2.5 animate-spin" />
             {run.status.replace("_", " ")}
-          </Tag>
+          </Badge>
         )}
-        <span className="mono text-[11.5px]" style={{ color: "var(--tower-dimmer)" }}>
+        <span className="mono text-[11.5px] text-muted-foreground">
           {run.service} · {run.stage} · ts {run.timestamp}
         </span>
       </div>
 
-      <div className="overflow-hidden rounded-[2px] border" style={{ borderColor: "var(--tower-edge)" }}>
+      <div className="divide-y divide-border overflow-hidden rounded border border-border">
         {run.steps.map((s) => (
-          <div
-            key={s.name}
-            className="flex items-center gap-2.5 border-b px-3 py-1.5 text-[12px] last:border-b-0"
-            style={{ borderColor: "var(--tower-edge-soft)" }}
-          >
+          <div key={s.name} className="flex items-center gap-2.5 px-3 py-1.5 text-[12px]">
             {s.status === "running" ? (
-              <Spinner size={12} />
+              <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-primary" />
+            ) : s.status === "done" ? (
+              <Check className="h-3.5 w-3.5 shrink-0 text-status-green-fg" />
+            ) : s.status === "failed" ? (
+              <X className="h-3.5 w-3.5 shrink-0 text-status-red-fg" />
             ) : (
-              <Icon
-                icon={s.status === "done" ? "tick" : s.status === "failed" ? "cross" : "minus"}
-                size={12}
-                color={s.status === "done" ? "#70e442" : s.status === "failed" ? "#e53e5a" : "#454e58"}
-              />
+              <Minus className="h-3.5 w-3.5 shrink-0 text-muted-foreground/40" />
             )}
-            <span
-              className="mono"
-              style={{ color: s.status === "pending" ? "var(--tower-dimmer)" : undefined }}
-            >
+            <span className={cn("mono", s.status === "pending" && "text-muted-foreground/60")}>
               {s.name}
             </span>
           </div>
@@ -357,15 +326,13 @@ function RunProgress({ run }: { run: RollbackRun }) {
       </div>
 
       {run.reason && (
-        <div className="mt-3 text-[12px]" style={{ color: "var(--tower-dim)" }}>
-          Reason: “{run.reason}”
-        </div>
+        <div className="mt-3 text-[12px] text-muted-foreground">Reason: “{run.reason}”</div>
       )}
 
       {run.status === "completed" && (
-        <Callout className="!mt-3" intent="success" icon="tick-circle" compact>
-          The stack now serves the rolled-back artifact. It appears in the deployment history
-          as a distinct <b>rollback</b> row.
+        <Callout tone="success" className="mt-3">
+          The stack now serves the rolled-back artifact. It appears in the deployment history as a
+          distinct <b>rollback</b> row.
         </Callout>
       )}
     </div>

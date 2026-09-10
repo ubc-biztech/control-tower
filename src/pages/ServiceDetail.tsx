@@ -1,19 +1,26 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
-  AnchorButton,
-  Button,
-  ButtonGroup,
-  Callout,
-  Spinner,
-  Tag,
-} from "@blueprintjs/core";
+  ChevronLeft,
+  Dot,
+  ExternalLink,
+  HelpCircle,
+  RefreshCw,
+  Terminal,
+  Undo2,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge, Chip } from "@/components/ui/badge";
+import { Callout } from "@/components/ui/callout";
+import { CenteredSpinner } from "@/components/ui/spinner";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { StatusTag } from "@/components/StatusTag";
 import { getDeployments } from "@/lib/api";
 import type { Deployment, MatrixResponse, Stage } from "@/lib/types";
 import { STAGES, cellKey } from "@/lib/types";
 import { absTime, bytes, firstLine, relTime, shortSha } from "@/lib/format";
-import { StatusTag } from "@/components/StatusTag";
 import { AWS_REGION, DEPLOYABLES } from "@/mock/world";
+import { cn } from "@/lib/utils";
 
 export function ServiceDetailPage({
   matrix,
@@ -55,183 +62,204 @@ export function ServiceDetailPage({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div
-        className="shrink-0 border-b px-4 py-2.5"
-        style={{ borderColor: "var(--tower-edge)", background: "var(--tower-panel)" }}
-      >
-        <div className="flex items-center gap-2">
-          <Link to="/" className="bp5-button bp5-minimal bp5-small">
-            <span className="bp5-icon bp5-icon-chevron-left" />
-          </Link>
-          <span className="mono text-[15px] font-bold text-white">{service}</span>
-          {cell && <StatusTag status={cell.status} behindBy={cell.behindBy} behindOf={cell.behindOf} />}
-          <div className="flex-1" />
-          <ButtonGroup>
-            {STAGES.map((s) => (
-              <Link
-                key={s}
-                to={`/service/${encodeURIComponent(service)}/${s}`}
-                className={`bp5-button bp5-small ${s === stage ? "bp5-active" : ""}`}
-              >
-                {s}
-              </Link>
-            ))}
-          </ButtonGroup>
-          <Button small icon="console" text="Logs" onClick={() => onLogs(service, stage)} />
-          <Button small icon="refresh" loading={loading} onClick={load} />
-        </div>
+      <div className="shrink-0 border-b border-border bg-card px-5 py-4">
+        <div className="flex items-start gap-3">
+          <Button variant="ghost" size="icon-sm" asChild className="mt-0.5">
+            <Link to="/">
+              <ChevronLeft className="h-4 w-4" />
+            </Link>
+          </Button>
 
-        <div className="mono mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]" style={{ color: "var(--tower-dimmer)" }}>
-          <span>stack {stackName}</span>
-          <span>·</span>
-          <span>{deployable?.repo}/{deployable?.path}</span>
-          <span>·</span>
-          <span>{deployable?.functions.length ?? 0} functions</span>
-          {cell?.cfnStatus && (
-            <>
+          <div className="min-w-0 flex-1">
+            <h1 className="mono flex flex-wrap items-center gap-2 text-[19px] font-bold leading-tight">
+              {service}
+              {cell && (
+                <StatusTag status={cell.status} behindBy={cell.behindBy} behindOf={cell.behindOf} />
+              )}
+            </h1>
+            <div className="mono mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] text-muted-foreground">
+              <span>stack {stackName}</span>
               <span>·</span>
-              <span>{cell.cfnStatus}</span>
-            </>
-          )}
-          <AnchorButton minimal small icon="share" href={cfnUrl} target="_blank" className="!text-[10.5px]">
-            CloudFormation
-          </AnchorButton>
+              <span>
+                {deployable?.repo}/{deployable?.path}
+              </span>
+              <span>·</span>
+              <span>{deployable?.functions.length ?? 0} functions</span>
+              {cell?.cfnStatus && (
+                <>
+                  <span>·</span>
+                  <span>{cell.cfnStatus}</span>
+                </>
+              )}
+              <a
+                href={cfnUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 text-primary no-underline hover:underline"
+              >
+                CloudFormation
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            </div>
+          </div>
+
+          <div className="flex shrink-0 items-center gap-1.5">
+            <div className="flex items-center gap-1">
+              {STAGES.map((s) => (
+                <Link
+                  key={s}
+                  to={`/service/${encodeURIComponent(service)}/${s}`}
+                  className={cn(
+                    "mono rounded border px-2 py-[3px] text-[11.5px] no-underline transition-colors",
+                    s === stage
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-border bg-white text-muted-foreground hover:bg-secondary",
+                  )}
+                >
+                  {s}
+                </Link>
+              ))}
+            </div>
+            <Button size="sm" onClick={() => onLogs(service, stage)}>
+              <Terminal className="h-3 w-3" />
+              Logs
+            </Button>
+            <Button size="icon-sm" onClick={load} title="Refresh">
+              <RefreshCw className={cn("h-3.5 w-3.5", loading && "animate-spin")} />
+            </Button>
+          </div>
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-auto">
-        <div className="px-4 pt-3">
-          <Callout icon="info-sign" compact>
-            <span className="text-[11.5px]">
-              History comes from the stack's deployment bucket (<span className="mono">sls deploy list</span>).
-              Serverless keeps the last 5 packages. <b>Only the current deploy carries a git SHA</b> —
-              it lives in the stack tags, not in S3, so earlier artifacts show a timestamp only.
-            </span>
-          </Callout>
-        </div>
+      <div className="min-h-0 flex-1 overflow-auto p-5">
+        <Callout tone="info" className="mb-3">
+          History comes from the stack's deployment bucket (<span className="mono">sls deploy list</span>
+          ). Serverless keeps the last 5 packages. <b>Only the current deploy carries a git SHA</b> —
+          it lives in the stack tags, not in S3, so earlier artifacts show a timestamp only.
+        </Callout>
 
         {error && (
-          <div className="p-4">
-            <Callout intent={error.includes("No stack") ? "warning" : "danger"} icon="offline" title={error}>
-              {error.includes("No stack")
-                ? `Nothing has ever been deployed to ${stage} for this service.`
-                : "Tower could not read the deployment bucket."}
-            </Callout>
-          </div>
+          <Callout tone={error.includes("No stack") ? "warning" : "danger"} title={error}>
+            {error.includes("No stack")
+              ? `Nothing has ever been deployed to ${stage} for this service.`
+              : "Tower could not read the deployment bucket."}
+          </Callout>
         )}
 
-        {!rows && loading && (
-          <div className="pt-16 text-center">
-            <Spinner size={22} />
-          </div>
-        )}
+        {!rows && loading && <CenteredSpinner label="Listing artifacts…" />}
 
         {rows && rows.length === 0 && !error && (
-          <div className="p-4">
-            <Callout intent="warning" icon="warning-sign" title="No artifacts in the deployment bucket">
-              This service has never been deployed to {stage}.
-            </Callout>
-          </div>
+          <Callout tone="warning" title="No artifacts in the deployment bucket">
+            This service has never been deployed to {stage}.
+          </Callout>
         )}
 
         {rows && rows.length > 0 && (
-          <table className="tower-table mt-3">
-            <thead>
-              <tr>
-                <th style={{ width: 30 }} />
-                <th>Deployment</th>
-                <th style={{ width: 178 }}>Deployed</th>
-                <th style={{ width: 140 }}>By</th>
-                <th style={{ width: 110 }}>Size</th>
-                <th style={{ width: 200 }}>Artifact timestamp</th>
-                <th style={{ width: 132 }} />
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((d) => (
-                <tr key={d.timestamp}>
-                  <td>
-                    {d.current ? (
-                      <span
-                        className="bp5-icon bp5-icon-dot"
-                        style={{ color: d.status === "failed" ? "#e53e5a" : "#70e442" }}
-                      />
-                    ) : null}
-                  </td>
-                  <td>
-                    <div className="flex flex-wrap items-center gap-2">
-                      {d.git ? (
-                        <>
-                          <span className="mono text-[12.5px] text-white">{shortSha(d.git.sha)}</span>
-                          <span className="text-[12px]">{firstLine(d.git.message, 78)}</span>
-                          <Tag minimal>{d.git.ref}</Tag>
-                        </>
-                      ) : (
-                        <Tag minimal icon="help">
-                          no git metadata
-                        </Tag>
-                      )}
+          <div className="overflow-hidden rounded border border-border bg-card">
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead style={{ width: 28 }} />
+                  <TableHead>Deployment</TableHead>
+                  <TableHead style={{ width: 168 }}>Deployed</TableHead>
+                  <TableHead style={{ width: 130 }}>By</TableHead>
+                  <TableHead style={{ width: 80 }}>Size</TableHead>
+                  <TableHead style={{ width: 150 }}>Artifact ts</TableHead>
+                  <TableHead style={{ width: 118 }} />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {rows.map((d) => (
+                  <TableRow key={d.timestamp}>
+                    <TableCell className="!px-1">
                       {d.current && (
-                        <Tag intent={d.status === "failed" ? "danger" : "success"} minimal={d.status === "failed"}>
-                          {d.status === "failed" ? "failed" : "current"}
-                        </Tag>
+                        <Dot
+                          className={cn(
+                            "h-5 w-5",
+                            d.status === "failed" ? "text-status-red-fg" : "text-status-green-fg",
+                          )}
+                        />
                       )}
-                      {d.kind === "rollback" && (
-                        <Tag intent="warning" minimal icon="undo">
-                          rollback
-                        </Tag>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap items-center gap-2">
+                        {d.git ? (
+                          <>
+                            <span className="mono text-[12.5px] font-medium">{shortSha(d.git.sha)}</span>
+                            <span className="text-[12px]">{firstLine(d.git.message, 76)}</span>
+                            <Chip>{d.git.ref}</Chip>
+                          </>
+                        ) : (
+                          <Badge tone="gray">
+                            <HelpCircle className="h-2.5 w-2.5" />
+                            no git metadata
+                          </Badge>
+                        )}
+                        {d.current && (
+                          <Badge tone={d.status === "failed" ? "red" : "green"}>
+                            {d.status === "failed" ? "failed" : "current"}
+                          </Badge>
+                        )}
+                        {d.kind === "rollback" && (
+                          <Badge tone="amber">
+                            <Undo2 className="h-2.5 w-2.5" />
+                            rollback
+                          </Badge>
+                        )}
+                      </div>
+                      {d.reason && (
+                        <div className="mt-[3px] text-[11px] italic text-muted-foreground">
+                          “{d.reason}”
+                        </div>
                       )}
-                    </div>
-                    {d.reason && (
-                      <div className="mt-[3px] text-[11px] italic" style={{ color: "var(--tower-dim)" }}>
-                        “{d.reason}”
+                      <div className="mono mt-[3px] truncate text-[10.5px] text-muted-foreground/70">
+                        s3://…/{d.artifactKey}
                       </div>
-                    )}
-                    <div className="mono mt-[3px] truncate text-[10.5px]" style={{ color: "var(--tower-dimmer)" }}>
-                      s3://…/{d.artifactKey}
-                    </div>
-                  </td>
-                  <td className="mono whitespace-nowrap text-[11.5px]">
-                    {relTime(d.datetime)} ago
-                    <div className="text-[10.5px]" style={{ color: "var(--tower-dimmer)" }}>
-                      {absTime(d.datetime)}
-                    </div>
-                  </td>
-                  <td className="mono text-[11.5px]">
-                    {d.actor}
-                    {d.git && (
-                      <div>
-                        <a href={d.git.runUrl} target="_blank" rel="noreferrer" className="text-[10.5px]">
-                          run #{d.git.runNumber}
-                        </a>
-                      </div>
-                    )}
-                  </td>
-                  <td className="mono text-[11.5px]" style={{ color: "var(--tower-dim)" }}>
-                    {bytes(d.sizeBytes)}
-                  </td>
-                  <td className="mono text-[11.5px]" style={{ color: "var(--tower-dim)" }}>
-                    {d.timestamp}
-                  </td>
-                  <td>
-                    {!d.current && (
-                      <Button
-                        small
-                        outlined
-                        className="!whitespace-nowrap"
-                        icon="undo"
-                        intent={stage === "prod" ? "danger" : "primary"}
-                        disabled={cell?.status === "rolling-back" || matrix?.stale}
-                        onClick={() => onRollback(service, stage, d.timestamp)}
-                        title={`Roll back to artifact ${d.timestamp}`}
-                        text="Roll back"
-                      />
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                    </TableCell>
+                    <TableCell className="mono whitespace-nowrap text-[11.5px]">
+                      {relTime(d.datetime)} ago
+                      <div className="text-[10.5px] text-muted-foreground">{absTime(d.datetime)}</div>
+                    </TableCell>
+                    <TableCell className="mono text-[11.5px]">
+                      {d.actor}
+                      {d.git && (
+                        <div>
+                          <a
+                            href={d.git.runUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-[10.5px] text-primary hover:underline"
+                          >
+                            run #{d.git.runNumber}
+                          </a>
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell className="mono text-[11.5px] text-muted-foreground">
+                      {bytes(d.sizeBytes)}
+                    </TableCell>
+                    <TableCell className="mono text-[11.5px] text-muted-foreground">
+                      {d.timestamp}
+                    </TableCell>
+                    <TableCell>
+                      {!d.current && (
+                        <Button
+                          size="sm"
+                          variant={stage === "prod" ? "danger-outline" : "default"}
+                          disabled={cell?.status === "rolling-back" || matrix?.stale}
+                          onClick={() => onRollback(service, stage, d.timestamp)}
+                          title={`Roll back to artifact ${d.timestamp}`}
+                        >
+                          <Undo2 className="h-3 w-3" />
+                          Roll back
+                        </Button>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         )}
       </div>
     </div>
