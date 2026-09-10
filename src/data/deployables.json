@@ -1,0 +1,424 @@
+[
+  {
+    "name": "biztechApi-bots",
+    "kind": "serverless",
+    "repo": "ubc-biztech/serverless-biztechapp",
+    "path": "services/bots",
+    "stackPattern": "biztechApi-bots-{stage}",
+    "stages": [
+      "dev",
+      "staging",
+      "prod"
+    ],
+    "functions": [
+      "discordInteractions",
+      "discordAccountMapping",
+      "discordWebhook",
+      "slackGithubReminder",
+      "slackShortcutEventHandler"
+    ]
+  },
+  {
+    "name": "biztechApi-btx",
+    "kind": "serverless",
+    "repo": "ubc-biztech/serverless-biztechapp",
+    "path": "services/btx",
+    "stackPattern": "biztechApi-btx-{stage}",
+    "stages": [
+      "dev",
+      "staging",
+      "prod"
+    ],
+    "functions": [
+      "btxGetProjects",
+      "btxGetMarketSnapshot",
+      "btxBuy",
+      "btxSell",
+      "btxPortfolio",
+      "btxRecentTrades",
+      "btxPriceHistory",
+      "btxLeaderboard",
+      "btxInvestmentImpact",
+      "btxAdminProject",
+      "btxAdminSeedUpdate",
+      "btxAdminPhaseBump",
+      "wsConnect",
+      "wsDisconnect",
+      "wsSubscribe"
+    ]
+  },
+  {
+    "name": "biztechApi-emails",
+    "kind": "serverless",
+    "repo": "ubc-biztech/serverless-biztechapp",
+    "path": "services/emails",
+    "stackPattern": "biztechApi-emails-{stage}",
+    "stages": [
+      "dev",
+      "staging",
+      "prod"
+    ],
+    "functions": [
+      "getEmailTemplate",
+      "createEmailTemplate",
+      "updateEmailTemplate",
+      "deleteEmailTemplate",
+      "listEmailTemplates"
+    ]
+  },
+  {
+    "name": "biztechApi-events",
+    "kind": "serverless",
+    "repo": "ubc-biztech/serverless-biztechapp",
+    "path": "services/events",
+    "stackPattern": "biztechApi-events-{stage}",
+    "stages": [
+      "dev",
+      "staging",
+      "prod"
+    ],
+    "functions": [
+      "eventCreate",
+      "eventDelete",
+      "eventGetAll",
+      "eventUpdate",
+      "eventGet",
+      "eventGetActiveEvent",
+      "createEventImageUploadUrl",
+      "eventGetFeedbackForm",
+      "eventSubmitFeedback",
+      "eventGetFeedbackSubmissions"
+    ]
+  },
+  {
+    "name": "biztechApi",
+    "kind": "serverless",
+    "repo": "ubc-biztech/serverless-biztechapp",
+    "path": "services/hello",
+    "stackPattern": "biztechApi-{stage}",
+    "stages": [
+      "dev",
+      "staging",
+      "prod"
+    ],
+    "functions": [
+      "hello"
+    ]
+  },
+  {
+    "name": "biztechApi-instagram",
+    "kind": "serverless",
+    "repo": "ubc-biztech/serverless-biztechapp",
+    "path": "services/instagram",
+    "stackPattern": "biztechApi-instagram-{stage}",
+    "stages": [
+      "dev",
+      "staging",
+      "prod"
+    ],
+    "functions": [
+      "instagramGetAnalytics",
+      "instagramRefreshTokenManual",
+      "instagramGetTokenStatus",
+      "instagramRefreshTokenScheduled"
+    ]
+  },
+  {
+    "name": "biztechApi-interactions",
+    "kind": "serverless",
+    "repo": "ubc-biztech/serverless-biztechapp",
+    "path": "services/interactions",
+    "stackPattern": "biztechApi-interactions-{stage}",
+    "stages": [
+      "dev",
+      "staging",
+      "prod"
+    ],
+    "functions": [
+      "search",
+      "interactionCreate",
+      "checkConnection",
+      "interactionJournalGetAll",
+      "interactionQuestsGetAll",
+      "wallSnapshot",
+      "wsConnect",
+      "wsDisconnect",
+      "wsSubscribe"
+    ]
+  },
+  {
+    "name": "biztech-investments",
+    "kind": "serverless",
+    "repo": "ubc-biztech/serverless-biztechapp",
+    "path": "services/investments",
+    "stackPattern": "biztech-investments-{stage}",
+    "stages": [
+      "dev",
+      "staging",
+      "prod"
+    ],
+    "functions": [
+      "invest",
+      "teamStatus",
+      "investorStatus",
+      "investments"
+    ]
+  },
+  {
+    "name": "biztechApi-members",
+    "kind": "serverless",
+    "repo": "ubc-biztech/serverless-biztechapp",
+    "path": "services/members",
+    "stackPattern": "biztechApi-members-{stage}",
+    "stages": [
+      "dev",
+      "staging",
+      "prod"
+    ],
+    "functions": [
+      "memberCreate",
+      "memberGet",
+      "memberGetEmail",
+      "memberGetAll",
+      "memberUpdate",
+      "memberDelete",
+      "memberGrantMembership",
+      "memberCreatePartnerMemberships"
+    ]
+  },
+  {
+    "name": "biztechApi-payments",
+    "kind": "serverless",
+    "repo": "ubc-biztech/serverless-biztechapp",
+    "path": "services/payments",
+    "stackPattern": "biztechApi-payments-{stage}",
+    "stages": [
+      "dev",
+      "staging",
+      "prod"
+    ],
+    "functions": [
+      "payment",
+      "paymentWebhook",
+      "paymentCancelWebhook"
+    ]
+  },
+  {
+    "name": "biztechApi-prizes",
+    "kind": "serverless",
+    "repo": "ubc-biztech/serverless-biztechapp",
+    "path": "services/prizes",
+    "stackPattern": "biztechApi-prizes-{stage}",
+    "stages": [
+      "dev",
+      "staging",
+      "prod"
+    ],
+    "functions": [
+      "prizeGetAll",
+      "prizeCreate",
+      "prizeUpdate",
+      "prizeDelete"
+    ]
+  },
+  {
+    "name": "biztechApi-profiles",
+    "kind": "serverless",
+    "repo": "ubc-biztech/serverless-biztechapp",
+    "path": "services/profiles",
+    "stackPattern": "biztechApi-profiles-{stage}",
+    "stages": [
+      "dev",
+      "staging",
+      "prod"
+    ],
+    "functions": [
+      "createProfile",
+      "createPartialPartnerProfile",
+      "createCompanyProfile",
+      "linkPartnerToCompany",
+      "syncPartnerData",
+      "getPublicProfile",
+      "getUserProfile",
+      "updateUserProfile",
+      "createProfilePicUploadUrl"
+    ]
+  },
+  {
+    "name": "biztechApi-qr",
+    "kind": "serverless",
+    "repo": "ubc-biztech/serverless-biztechapp",
+    "path": "services/qr",
+    "stackPattern": "biztechApi-qr-{stage}",
+    "stages": [
+      "dev",
+      "staging",
+      "prod"
+    ],
+    "functions": [
+      "qrScan",
+      "qrGetAll",
+      "qrGetOne",
+      "qrCreate",
+      "qrUpdate",
+      "qrDelete"
+    ]
+  },
+  {
+    "name": "biztechApi-quests",
+    "kind": "serverless",
+    "repo": "ubc-biztech/serverless-biztechapp",
+    "path": "services/quests",
+    "stackPattern": "biztechApi-quests-{stage}",
+    "stages": [
+      "dev",
+      "staging",
+      "prod"
+    ],
+    "functions": [
+      "updateQuest",
+      "getQuest",
+      "getQuestsByEvent",
+      "getQuestKiosk"
+    ]
+  },
+  {
+    "name": "biztech-quizzes",
+    "kind": "serverless",
+    "repo": "ubc-biztech/serverless-biztechapp",
+    "path": "services/quizzes",
+    "stackPattern": "biztech-quizzes-{stage}",
+    "stages": [
+      "dev",
+      "staging",
+      "prod"
+    ],
+    "functions": [
+      "upload",
+      "report",
+      "all",
+      "aggregate",
+      "perMbti",
+      "wrapped"
+    ]
+  },
+  {
+    "name": "biztechApi-registrations",
+    "kind": "serverless",
+    "repo": "ubc-biztech/serverless-biztechapp",
+    "path": "services/registrations",
+    "stackPattern": "biztechApi-registrations-{stage}",
+    "stages": [
+      "dev",
+      "staging",
+      "prod"
+    ],
+    "functions": [
+      "registrationPost",
+      "registrationPartnerBatch",
+      "registrationPut",
+      "registrationGet",
+      "registrationDelete",
+      "registrationDeleteMany",
+      "leaderboardGet",
+      "massUpdateRegistration"
+    ]
+  },
+  {
+    "name": "biztechApi-stickers",
+    "kind": "serverless",
+    "repo": "ubc-biztech/serverless-biztechapp",
+    "path": "services/stickers",
+    "stackPattern": "biztechApi-stickers-{stage}",
+    "stages": [
+      "dev",
+      "staging",
+      "prod"
+    ],
+    "functions": [
+      "connectHandler",
+      "disconnectHandler",
+      "defaultHandler",
+      "adminHandler",
+      "stickerHandler",
+      "scoreHandler",
+      "syncHandler",
+      "scoresGetAll",
+      "scoresGetRoom",
+      "scoresGetTeam",
+      "stickersGetAll",
+      "stickersGetRoom",
+      "stickersGetTeam"
+    ]
+  },
+  {
+    "name": "biztechApi-team",
+    "kind": "serverless",
+    "repo": "ubc-biztech/serverless-biztechapp",
+    "path": "services/teams",
+    "stackPattern": "biztechApi-team-{stage}",
+    "stages": [
+      "dev",
+      "staging",
+      "prod"
+    ],
+    "functions": [
+      "updateTeamPoints",
+      "addMultipleQRScans",
+      "joinTeam",
+      "leaveTeam",
+      "makeTeam",
+      "getTeamFromUserID",
+      "teamsGetAll",
+      "changeTeamName",
+      "getNormalizedRoundScores",
+      "getTeamFeedback",
+      "getJudgeCurrentTeam",
+      "getJudgeSubmissions",
+      "createJudgeSubmissions",
+      "updateJudgeSubmission",
+      "updateCurrentTeamForJudge",
+      "getCurrentRound",
+      "setCurrentRound"
+    ]
+  },
+  {
+    "name": "biztechApi-transactions",
+    "kind": "serverless",
+    "repo": "ubc-biztech/serverless-biztechapp",
+    "path": "services/transactions",
+    "stackPattern": "biztechApi-transactions-{stage}",
+    "stages": [
+      "dev",
+      "staging",
+      "prod"
+    ],
+    "functions": [
+      "transactionGetAll",
+      "transactionCreate"
+    ]
+  },
+  {
+    "name": "biztechApi-users",
+    "kind": "serverless",
+    "repo": "ubc-biztech/serverless-biztechapp",
+    "path": "services/users",
+    "stackPattern": "biztechApi-users-{stage}",
+    "stages": [
+      "dev",
+      "staging",
+      "prod"
+    ],
+    "functions": [
+      "ensureAuthenticatedUser",
+      "userCreate",
+      "checkUser",
+      "checkUserMembership",
+      "userGet",
+      "userGetAll",
+      "userUpdate",
+      "userFavouriteEvent",
+      "userDelete"
+    ]
+  }
+]

@@ -1,0 +1,271 @@
+@import "normalize.css";
+@import "@blueprintjs/core/lib/css/blueprint.css";
+@import "@blueprintjs/icons/lib/css/blueprint-icons.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: "Satoshi";
+  src: url("/fonts/Satoshi-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Satoshi";
+  src: url("/fonts/Satoshi-Medium.woff2") format("woff2");
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Satoshi";
+  src: url("/fonts/Satoshi-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-display: swap;
+}
+
+/* ------------------------------------------------------------------ */
+/* Apollo-ish control room: darker than Blueprint's default dark, flat, */
+/* no rounding beyond 2px, hairline borders everywhere.                 */
+/* ------------------------------------------------------------------ */
+
+:root {
+  --tower-bg: #0f1216;
+  --tower-panel: #14181d;
+  --tower-raised: #191e24;
+  --tower-edge: #2b333d;
+  --tower-edge-soft: #21272e;
+  --tower-text: #d3d8de;
+  --tower-dim: #8a939e;
+  --tower-dimmer: #626b75;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body.bp5-dark {
+  margin: 0;
+  background: var(--tower-bg);
+  color: var(--tower-text);
+  font-family: "Satoshi", Inter, system-ui, sans-serif;
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+.mono {
+  font-family: "JetBrains Mono", SFMono-Regular, Menlo, Consolas, monospace;
+  font-variant-ligatures: none;
+}
+
+/* Blueprint surface overrides ------------------------------------- */
+
+.bp5-dark .bp5-card,
+.bp5-dark .bp5-dialog,
+.bp5-dark .bp5-popover-content,
+.bp5-dark .bp5-drawer,
+.bp5-dark .bp5-menu {
+  background: var(--tower-panel);
+  border-radius: 2px;
+  box-shadow: none;
+  border: 1px solid var(--tower-edge);
+}
+
+.bp5-dark .bp5-dialog,
+.bp5-dark .bp5-drawer {
+  box-shadow: 0 0 0 1px var(--tower-edge), 0 24px 64px rgba(0, 0, 0, 0.65);
+}
+
+.bp5-dark .bp5-dialog-header {
+  background: var(--tower-raised);
+  border-bottom: 1px solid var(--tower-edge);
+  border-radius: 0;
+  box-shadow: none;
+  min-height: 44px;
+  padding-left: 14px;
+}
+
+.bp5-dark .bp5-button {
+  border-radius: 2px;
+}
+
+.bp5-dark .bp5-input,
+.bp5-dark .bp5-input-group .bp5-input {
+  border-radius: 2px;
+  background: #0b0e12;
+  box-shadow: inset 0 0 0 1px var(--tower-edge);
+}
+
+.bp5-dark .bp5-tag {
+  border-radius: 2px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  min-height: 16px;
+  padding: 1px 5px;
+}
+
+.bp5-dark .bp5-tag.bp5-minimal {
+  letter-spacing: 0.03em;
+}
+
+.bp5-dark .bp5-callout {
+  border-radius: 2px;
+  background: var(--tower-raised);
+  border: 1px solid var(--tower-edge);
+}
+
+.bp5-dark .bp5-drawer {
+  background: var(--tower-bg);
+}
+
+/* Dense table ------------------------------------------------------ */
+
+table.tower-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  /* Declared column widths must hold, so long commit messages truncate
+     instead of pushing prod off the right edge. */
+  table-layout: fixed;
+}
+
+table.tower-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--tower-raised);
+  border-bottom: 1px solid var(--tower-edge);
+  color: var(--tower-dim);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  text-align: left;
+  padding: 7px 12px;
+  white-space: nowrap;
+}
+
+table.tower-table tbody td {
+  border-bottom: 1px solid var(--tower-edge-soft);
+  padding: 6px 12px;
+  vertical-align: top;
+}
+
+table.tower-table tbody tr:hover td {
+  background: rgba(255, 255, 255, 0.022);
+}
+
+/* Left rail -------------------------------------------------------- */
+
+.rail-link {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 12px;
+  color: var(--tower-dim);
+  border-left: 2px solid transparent;
+  font-size: 12.5px;
+  text-decoration: none;
+  user-select: none;
+}
+.rail-link:hover {
+  color: var(--tower-text);
+  background: rgba(255, 255, 255, 0.03);
+  text-decoration: none;
+}
+.rail-link.active {
+  color: #fff;
+  background: rgba(112, 228, 66, 0.07);
+  border-left-color: #70e442;
+}
+.rail-link.disabled {
+  color: var(--tower-dimmer);
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+/* Matrix cell ------------------------------------------------------ */
+
+.matrix-cell {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 5px 8px;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  background: transparent;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+}
+.matrix-cell:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--tower-edge);
+  text-decoration: none;
+}
+.matrix-cell.is-absent {
+  cursor: default;
+}
+.matrix-cell.is-absent:hover {
+  background: transparent;
+  border-color: transparent;
+}
+
+/* Log stream ------------------------------------------------------- */
+
+.log-line {
+  display: grid;
+  grid-template-columns: 92px 190px 1fr;
+  gap: 10px;
+  padding: 1px 12px;
+  font-size: 11.5px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+  border-left: 2px solid transparent;
+}
+.log-line:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+.log-line.lvl-ERROR {
+  border-left-color: #e53e5a;
+  background: rgba(229, 62, 90, 0.06);
+}
+.log-line.lvl-WARN {
+  border-left-color: #d9822b;
+}
+.log-line.lvl-START,
+.log-line.lvl-END,
+.log-line.lvl-REPORT {
+  color: var(--tower-dimmer);
+}
+
+::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #2f373f;
+  border-radius: 0;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3d4650;
+}
+
+.matrix-cell .bp5-button.bp5-small {
+  min-height: 20px;
+  padding: 0 6px;
+  font-size: 11px;
+}
+.matrix-cell .bp5-button.bp5-small .bp5-icon {
+  margin-right: 3px;
+}
