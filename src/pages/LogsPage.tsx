@@ -21,7 +21,7 @@ export function LogsPage({
     <div className="flex h-full min-h-0 flex-col">
       <PageHeader
         title="Logs"
-        description="The last 10 minutes across every Lambda in a service's stack, merged and sorted. Log groups are discovered from the stack's resources, so new functions appear on their own. Tower stores nothing."
+        description="The last 10 minutes across every Lambda in a service's stack, merged and sorted. Log groups are discovered from the stack's resources, so new functions appear on their own. Control Tower stores nothing."
         actions={
           <div className="flex items-center gap-1">
             {STAGES.map((s) => (

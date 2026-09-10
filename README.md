@@ -1,4 +1,4 @@
-# Tower — P0
+# BizTech Control Tower — P0
 
 Internal control plane for UBC BizTech infrastructure. **This is P0: a proof of
 concept with a real UI and entirely fabricated data.** It exists to validate the
@@ -43,22 +43,55 @@ the v1 sections greyed out.
 The read-only rule from the requirements is enforced here by the strongest
 possible means: there is no code capable of writing anything.
 
-## Layout
+## Where things live
+
+**Every file is named after the thing it exports.** If you are looking for the
+sidebar, it is `Sidebar.tsx`.
 
 ```
 src/
-  data/deployables.json   generated from services/*/serverless.yml — 20 entries, 142 functions
+  App.tsx                          routes, shared matrix state, drawer/dialog wiring
+
+  components/
+    layout/
+      AppLayout.tsx                sidebar + top bar + routed page
+      Sidebar.tsx                  the left navigation rail
+      TopBar.tsx                   read-only badge, freshness, refresh
+    DeploymentCell.tsx             one service on one environment, with its row actions
+    LogsDrawer.tsx                 the logs panel (R3)
+    RollbackDialog.tsx             the confirm dialog and run progress (R2)
+    PageHeader.tsx                 Apollo-style page banner
+    StatTiles.tsx                  the counter tiles under a banner
+    StatusTag.tsx                  current / behind / failed / unknown badge
+    ui/                            shadcn-style primitives, same conventions as bt-web-v2
+                                   button, badge, input, dialog, sheet, switch,
+                                   tooltip, table, callout, spinner, toast
+
+  pages/
+    EnvironmentsPage.tsx           home: the service x environment matrix (R1)
+    EnvironmentDetailPage.tsx      one stage, every service
+    ServiceDetailPage.tsx          one service on one stage: deployment history
+    ServicesPage.tsx               the deployable inventory
+    LogsPage.tsx                   pick a service, open the logs drawer
+
   lib/
-    api.ts                the seam. Shaped exactly like the future HTTP routes.
-    types.ts              response shapes shared by mock and real backend
-    format.ts             sha / time / bytes helpers
+    api.ts                         the seam. Shaped exactly like the future HTTP routes.
+    types.ts                       response shapes shared by mock and real backend
+    format.ts                      sha / time / bytes helpers
+    utils.ts                       cn(), same as bt-web-v2's
+
   mock/
-    world.ts              stack + deployment state, rollback simulation
-    logs.ts               CloudWatch event generation, console URL builders
-    corpus.ts, rng.ts     commit messages, log templates, seeded PRNG
-  components/             Shell, StatusTag, RollbackDialog, LogsDrawer
-  pages/                  Matrix, ServiceDetail, Services, Logs
+    world.ts                       stack + deployment state, rollback simulation
+    logs.ts                        CloudWatch event generation, console URL builders
+    corpus.ts, rng.ts              commit messages, log templates, seeded PRNG
+
+  data/deployables.json            generated from services/*/serverless.yml
+                                   20 entries, 142 functions
 ```
+
+Conventions: one exported component per file, file name matches it. Pages are
+`<Thing>Page.tsx` exporting `<Thing>Page`. Shared primitives live in
+`components/ui/`; anything with product knowledge in it lives a level up.
 
 ### Swapping in the real backend
 

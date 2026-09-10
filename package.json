@@ -1,9 +1,9 @@
 {
-  "name": "tower",
+  "name": "biztech-control-tower",
   "private": true,
   "version": "0.0.0-p0",
   "type": "module",
-  "description": "Tower — BizTech infra control plane. P0 proof of concept, fully mocked, read-only.",
+  "description": "BizTech Control Tower — infra control plane. P0 proof of concept, fully mocked, read-only.",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",

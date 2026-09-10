@@ -20,7 +20,7 @@ import { cellKey } from "./types";
 import { recentLogs } from "@/mock/logs";
 import { DEPLOYABLES, activeRunFor, startRollback, world } from "@/mock/world";
 
-export class TowerApiError extends Error {
+export class ApiError extends Error {
   constructor(
     public status: number,
     message: string,
@@ -45,7 +45,7 @@ let lastGoodMatrix: MatrixResponse | null = null;
 export async function getMatrix(): Promise<MatrixResponse> {
   await delay(180, 520);
   if (simulateOutage) {
-    if (!lastGoodMatrix) throw new TowerApiError(503, "AWS unreachable and no cached state");
+    if (!lastGoodMatrix) throw new ApiError(503, "AWS unreachable and no cached state");
     return { ...lastGoodMatrix, stale: true };
   }
   const res: MatrixResponse = {
@@ -60,9 +60,9 @@ export async function getMatrix(): Promise<MatrixResponse> {
 
 export async function getDeployments(service: string, stage: Stage): Promise<Deployment[]> {
   await delay(140, 400);
-  if (simulateOutage) throw new TowerApiError(503, "AWS unreachable");
+  if (simulateOutage) throw new ApiError(503, "AWS unreachable");
   const list = world.deployments[cellKey(service, stage)];
-  if (!list) throw new TowerApiError(404, `No stack for ${service} on ${stage}`);
+  if (!list) throw new ApiError(404, `No stack for ${service} on ${stage}`);
   return structuredClone(list);
 }
 
@@ -72,7 +72,7 @@ export async function getLogs(
   filter?: string,
 ): Promise<LogsResponse> {
   await delay(220, 700);
-  if (simulateOutage) throw new TowerApiError(503, "CloudWatch unreachable");
+  if (simulateOutage) throw new ApiError(503, "CloudWatch unreachable");
   return recentLogs(service, stage, { minutes: 10, filter });
 }
 
@@ -92,7 +92,7 @@ export async function postRollback(args: {
   // service+stage is running.
   const active = activeRunFor(args.service, args.stage);
   if (active && active.status !== "completed") {
-    throw new TowerApiError(
+    throw new ApiError(
       409,
       "A rollback is already running for this service and stage",
       active.runUrl,
@@ -104,6 +104,6 @@ export async function postRollback(args: {
 export async function getRollbackRun(runId: string): Promise<RollbackRun> {
   await delay(60, 180);
   const run = world.runs[runId];
-  if (!run) throw new TowerApiError(404, "No such run");
+  if (!run) throw new ApiError(404, "No such run");
   return structuredClone(run);
 }

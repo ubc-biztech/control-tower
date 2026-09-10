@@ -1,4 +1,4 @@
-# Tower P0 — build notes
+# BizTech Control Tower — P0 build notes
 
 What this build is, what it deliberately isn't, and what the real v0 has to
 resolve. Written 2026-09-09.
@@ -111,8 +111,16 @@ clicks it against a real log group. The per-log-group links are the ones to trus
 - No tests. There is no logic here worth testing that will survive contact with
   the real backend.
 
-## Directory name
+## Naming
 
-The brief names the repo `ubc-biztech/tower`. This working copy sits at
-`bt-tower/`, renamed mid-build to match the `bt-*` convention of `bt-web-v2`.
-The product name is still Tower.
+The product is **BizTech Control Tower**; the sidebar and title bar say
+"Control Tower". The requirements doc (§2) proposed the single word "Tower" —
+that is still the short form in code comments and in the `bt-tower` directory
+name, which was renamed mid-build to match the `bt-*` convention of `bt-web-v2`.
+
+File naming: one exported component per file, file name matches the export,
+pages are `<Thing>Page.tsx`. The first pass buried the sidebar in an unexported
+`Rail()` inside a file called `Shell.tsx`, which nobody could be expected to
+find; it is now `components/layout/Sidebar.tsx`. Same reasoning moved the matrix
+cell out of the page file into `components/DeploymentCell.tsx` and split
+`StatTiles` out of `PageHeader`.

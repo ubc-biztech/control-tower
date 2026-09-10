@@ -221,7 +221,7 @@ export function LogsDrawer({
         </div>
 
         <div className="shrink-0 border-t border-border bg-secondary/50 px-4 py-1.5 text-[10.5px] text-muted-foreground">
-          Tower stores nothing. Anything older than 10 minutes lives in the console.
+          Control Tower stores nothing. Anything older than 10 minutes lives in the console.
           {lastAt && <span className="mono"> · refreshed {new Date(lastAt).toLocaleTimeString()}</span>}
         </div>
       </SheetContent>

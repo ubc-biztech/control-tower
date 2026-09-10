@@ -6,8 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { Callout } from "@/components/ui/callout";
 import { CenteredSpinner } from "@/components/ui/spinner";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { PageHeader, StatTiles } from "@/components/PageHeader";
-import { Cell } from "@/pages/Matrix";
+import { PageHeader } from "@/components/PageHeader";
+import { StatTiles } from "@/components/StatTiles";
+import { DeploymentCell } from "@/components/DeploymentCell";
 import type { MatrixResponse, Stage } from "@/lib/types";
 import { cellKey } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -20,7 +21,7 @@ const BLURB: Record<Stage, string> = {
 };
 
 /** Single-environment view: every service on one stage, Apollo-style. */
-export function EnvironmentPage({
+export function EnvironmentDetailPage({
   matrix,
   loading,
   onLogs,
@@ -147,7 +148,7 @@ export function EnvironmentPage({
                         {d.stackPattern.replace("{stage}", stage)}
                       </TableCell>
                       <TableCell className="!px-1.5 !py-1">
-                        <Cell
+                        <DeploymentCell
                           cell={cell}
                           service={d.name}
                           stage={stage}

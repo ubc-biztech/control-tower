@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useState } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
-import { Shell } from "@/components/Shell";
+import { AppLayout } from "@/components/layout/AppLayout";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { LogsDrawer } from "@/components/LogsDrawer";
 import { RollbackDialog, type RollbackTarget } from "@/components/RollbackDialog";
-import { MatrixPage } from "@/pages/Matrix";
-import { EnvironmentPage } from "@/pages/Environment";
-import { ServiceDetailPage } from "@/pages/ServiceDetail";
-import { ServicesPage } from "@/pages/Services";
-import { LogsPage } from "@/pages/Logs";
+import { EnvironmentsPage } from "@/pages/EnvironmentsPage";
+import { EnvironmentDetailPage } from "@/pages/EnvironmentDetailPage";
+import { ServiceDetailPage } from "@/pages/ServiceDetailPage";
+import { ServicesPage } from "@/pages/ServicesPage";
+import { LogsPage } from "@/pages/LogsPage";
 import { getMatrix } from "@/lib/api";
 import type { MatrixResponse, Stage } from "@/lib/types";
 import { Toaster, toast } from "@/components/ui/toast";
@@ -65,7 +65,7 @@ export default function App() {
 
   return (
     <TooltipProvider delayDuration={250}>
-      <Shell
+      <AppLayout
         fetchedAt={matrix?.fetchedAt}
         stale={matrix?.stale}
         loading={loading}
@@ -75,7 +75,7 @@ export default function App() {
           <Route
             path="/"
             element={
-              <MatrixPage
+              <EnvironmentsPage
                 data={matrix}
                 loading={loading}
                 error={error}
@@ -87,7 +87,7 @@ export default function App() {
           <Route
             path="/environment/:stage"
             element={
-              <EnvironmentPage
+              <EnvironmentDetailPage
                 matrix={matrix}
                 loading={loading}
                 onLogs={openLogs}
@@ -110,7 +110,7 @@ export default function App() {
           />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-      </Shell>
+      </AppLayout>
 
       <LogsDrawer
         service={logsTarget?.service ?? null}

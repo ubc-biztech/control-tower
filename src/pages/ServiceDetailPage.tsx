@@ -142,7 +142,7 @@ export function ServiceDetailPage({
           <Callout tone={error.includes("No stack") ? "warning" : "danger"} title={error}>
             {error.includes("No stack")
               ? `Nothing has ever been deployed to ${stage} for this service.`
-              : "Tower could not read the deployment bucket."}
+              : "Control Tower could not read the deployment bucket."}
           </Callout>
         )}
 

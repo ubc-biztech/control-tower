@@ -23,7 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Callout } from "@/components/ui/callout";
 import { CenteredSpinner } from "@/components/ui/spinner";
-import { TowerApiError, getDeployments, getRollbackRun, postRollback } from "@/lib/api";
+import { ApiError, getDeployments, getRollbackRun, postRollback } from "@/lib/api";
 import type { Deployment, RollbackRun, Stage } from "@/lib/types";
 import { absTime, bytes, firstLine, relTime, shortSha } from "@/lib/format";
 import { DEPLOYABLES } from "@/mock/world";
@@ -109,7 +109,7 @@ export function RollbackDialog({
       setRun(r);
       onDispatched?.();
     } catch (e) {
-      if (e instanceof TowerApiError) setError({ msg: e.message, detail: e.detail });
+      if (e instanceof ApiError) setError({ msg: e.message, detail: e.detail });
       else setError({ msg: e instanceof Error ? e.message : "Rollback failed to dispatch" });
     } finally {
       setSubmitting(false);
@@ -188,7 +188,7 @@ export function RollbackDialog({
                 <div className="text-[11.5px] leading-relaxed">
                   This triggers <code className="mono rounded bg-white px-1 py-[1px] text-[11px]">rollback.yml</code>{" "}
                   in GitHub Actions on{" "}
-                  <span className="mono">ubc-biztech/serverless-biztechapp</span>. Tower never runs
+                  <span className="mono">ubc-biztech/serverless-biztechapp</span>. Control Tower never runs
                   the Serverless CLI and never writes to AWS. Takes about 2 minutes.
                 </div>
                 <pre className="mono mt-2 overflow-x-auto rounded border border-border bg-[#0D172C] px-2.5 py-2 text-[11px] leading-relaxed text-[#A2B1D5]">
