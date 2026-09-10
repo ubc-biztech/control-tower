@@ -42,7 +42,7 @@ export function ServicesPage({ matrix }: { matrix: MatrixResponse | null }) {
         </div>
         <div className="flex-1" />
         <span className="text-[11.5px] text-muted-foreground">
-          {rows.length} deployables · {rows.reduce((a, b) => a + b.functions.length, 0)} functions
+          {rows.length} deployables
         </span>
       </div>
 
@@ -55,7 +55,6 @@ export function ServicesPage({ matrix }: { matrix: MatrixResponse | null }) {
                 <TableHead style={{ width: 96 }}>Kind</TableHead>
                 <TableHead style={{ width: 280 }}>Source</TableHead>
                 <TableHead style={{ width: 215 }}>Stack pattern</TableHead>
-                <TableHead style={{ width: 60 }}>Fns</TableHead>
                 <TableHead>Stages</TableHead>
               </TableRow>
             </TableHeader>
@@ -79,9 +78,6 @@ export function ServicesPage({ matrix }: { matrix: MatrixResponse | null }) {
                   </TableCell>
                   <TableCell className="mono truncate text-[11.5px] text-muted-foreground">
                     {d.stackPattern}
-                  </TableCell>
-                  <TableCell className="mono text-[11.5px] tabular-nums">
-                    {d.functions.length}
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">

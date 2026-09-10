@@ -141,7 +141,7 @@ export function EnvironmentDetailPage({
                           {d.name}
                         </Link>
                         <div className="mono mt-[2px] truncate text-[10.5px] text-muted-foreground">
-                          {d.path} · {d.functions.length} fn
+                          {d.path}
                         </div>
                       </TableCell>
                       <TableCell className="mono truncate pt-2 text-[11.5px] text-muted-foreground">

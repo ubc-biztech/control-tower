@@ -1,11 +1,11 @@
 import { Link } from "react-router-dom";
 import { HelpCircle, History, Terminal, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Tooltip } from "@/components/ui/tooltip";
 import { StatusTag } from "@/components/StatusTag";
+import { useRollbackBlockedReason } from "@/components/HealthProvider";
 import type { Stage, StackState } from "@/lib/types";
-import { firstLine, relTime, shortSha } from "@/lib/format";
+import { absTime, firstLine, relTime, shortSha } from "@/lib/format";
 
 /**
  * One service on one environment, as it appears in a matrix or environment
@@ -26,6 +26,8 @@ export function DeploymentCell({
   onLogs: (s: string, st: Stage) => void;
   onRollback: (s: string, st: Stage) => void;
 }) {
+  const rollbackBlocked = useRollbackBlockedReason();
+
   if (!cell || cell.status === "absent") {
     return (
       <div className="px-1.5 py-1 text-[12px] text-muted-foreground/70">
@@ -53,12 +55,9 @@ export function DeploymentCell({
               </span>
             </>
           ) : (
-            <Tooltip content="Deployed before the pipeline started stamping git:sha onto the stack">
-              <span>
-                <Badge tone="gray" className="cursor-help">
-                  <HelpCircle className="h-2.5 w-2.5" />
-                  no git metadata
-                </Badge>
+            <Tooltip content="This stack carries no git:sha tag, so Control Tower can only report when it was deployed, not what from.">
+              <span className="mono cursor-help truncate text-[12.5px]">
+                {absTime(cell.lastUpdated)}
               </span>
             </Tooltip>
           )}
@@ -84,7 +83,16 @@ export function DeploymentCell({
               <span className="truncate">{cell.git.actor}</span>
             </>
           ) : (
-            cell.cfnStatus && <span>· {cell.cfnStatus}</span>
+            cell.cfnStatus && (
+              <>
+                <span>·</span>
+                <span className="truncate">{cell.cfnStatus}</span>
+                <span className="flex shrink-0 items-center gap-1 opacity-70">
+                  <HelpCircle className="h-3 w-3" />
+                  no SHA
+                </span>
+              </>
+            )
           )}
         </div>
 
@@ -101,7 +109,8 @@ export function DeploymentCell({
           <Button
             variant={stage === "prod" ? "danger-outline" : "default"}
             size="xs"
-            disabled={disabled || busy}
+            disabled={disabled || busy || Boolean(rollbackBlocked)}
+            title={rollbackBlocked ?? undefined}
             onClick={() => onRollback(service, stage)}
           >
             <Undo2 className="h-3 w-3" />

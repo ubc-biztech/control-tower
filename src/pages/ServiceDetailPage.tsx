@@ -15,7 +15,8 @@ import { Callout } from "@/components/ui/callout";
 import { CenteredSpinner } from "@/components/ui/spinner";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { StatusTag } from "@/components/StatusTag";
-import { getDeployments } from "@/lib/api";
+import { useRollbackBlockedReason } from "@/components/HealthProvider";
+import { getDeployments, getStackFunctions } from "@/lib/api";
 import type { Deployment, MatrixResponse, Stage } from "@/lib/types";
 import { STAGES, cellKey } from "@/lib/types";
 import { absTime, bytes, firstLine, relTime, shortSha } from "@/lib/format";
@@ -38,6 +39,8 @@ export function ServiceDetailPage({
   const stage = (params.stage ?? "prod") as Stage;
 
   const [rows, setRows] = useState<Deployment[] | null>(null);
+  const [functions, setFunctions] = useState<string[] | null>(null);
+  const rollbackBlocked = useRollbackBlockedReason();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -54,6 +57,20 @@ export function ServiceDetailPage({
   }, [service, stage]);
 
   useEffect(load, [load, reloadToken]);
+
+  // Functions are discovered from the stack's resources, not from config, so
+  // new ones show up without anybody editing deployables.json (R3.2).
+  useEffect(() => {
+    setFunctions(null);
+    if (!getStackFunctions) return;
+    let cancelled = false;
+    getStackFunctions(service, stage)
+      .then((r) => !cancelled && setFunctions(r.lambdaFunctionNames))
+      .catch(() => !cancelled && setFunctions([]));
+    return () => {
+      cancelled = true;
+    };
+  }, [service, stage]);
 
   const deployable = DEPLOYABLES.find((d) => d.name === service);
   const cell = matrix?.cells[cellKey(service, stage)];
@@ -84,7 +101,9 @@ export function ServiceDetailPage({
                 {deployable?.repo}/{deployable?.path}
               </span>
               <span>·</span>
-              <span>{deployable?.functions.length ?? 0} functions</span>
+              <span>
+                {functions ? `${functions.length} functions` : "discovering functions…"}
+              </span>
               {cell?.cfnStatus && (
                 <>
                   <span>·</span>
@@ -133,9 +152,20 @@ export function ServiceDetailPage({
 
       <div className="min-h-0 flex-1 overflow-auto p-5">
         <Callout tone="info" className="mb-3">
-          History comes from the stack's deployment bucket (<span className="mono">sls deploy list</span>
-          ). Serverless keeps the last 5 packages. <b>Only the current deploy carries a git SHA</b> —
-          it lives in the stack tags, not in S3, so earlier artifacts show a timestamp only.
+          History comes from the stack's deployment bucket (
+          <span className="mono">sls deploy list</span>). Serverless keeps the last 5 packages.{" "}
+          {rows?.some((d) => d.git) ? (
+            <>
+              <b>Only the current deploy carries a git SHA</b> — it lives in the stack tags, not in
+              S3, so earlier artifacts show a timestamp only.
+            </>
+          ) : (
+            <>
+              <b>S3 records a timestamp and a size, and nothing else</b> — no commit, no author. The
+              stack tags would carry the SHA for the current deploy, but the pipeline does not stamp
+              them yet.
+            </>
+          )}
         </Callout>
 
         {error && (
@@ -221,7 +251,7 @@ export function ServiceDetailPage({
                       <div className="text-[10.5px] text-muted-foreground">{absTime(d.datetime)}</div>
                     </TableCell>
                     <TableCell className="mono text-[11.5px]">
-                      {d.actor}
+                      {d.actor ?? <span className="text-muted-foreground/60">not recorded</span>}
                       {d.git && (
                         <div>
                           <a
@@ -246,9 +276,13 @@ export function ServiceDetailPage({
                         <Button
                           size="sm"
                           variant={stage === "prod" ? "danger-outline" : "default"}
-                          disabled={cell?.status === "rolling-back" || matrix?.stale}
+                          disabled={
+                            cell?.status === "rolling-back" ||
+                            matrix?.stale ||
+                            Boolean(rollbackBlocked)
+                          }
+                          title={rollbackBlocked ?? `Roll back to artifact ${d.timestamp}`}
                           onClick={() => onRollback(service, stage, d.timestamp)}
-                          title={`Roll back to artifact ${d.timestamp}`}
                         >
                           <Undo2 className="h-3 w-3" />
                           Roll back

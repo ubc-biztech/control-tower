@@ -25,7 +25,7 @@ export function insightsUrl(logGroups: string[]) {
 export function functionsFor(service: string, stage: Stage) {
   const d = DEPLOYABLES.find((x) => x.name === service);
   if (!d) return [];
-  return d.functions.map((fn) => {
+  return (d.functions ?? []).map((fn) => {
     const functionName = `${service}-${stage}-${fn}`;
     return { key: fn, functionName, logGroup: `/aws/lambda/${functionName}` };
   });

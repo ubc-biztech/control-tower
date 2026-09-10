@@ -13,7 +13,8 @@ import {
   User,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { AWS_ACCOUNT, AWS_REGION, DEPLOYABLES } from "@/mock/world";
+import { isMock } from "@/lib/api";
+import { useHealth } from "@/components/HealthProvider";
 import { STAGES } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -169,6 +170,7 @@ function SidebarPlaceholder({
 }
 
 function AccountBlock() {
+  const health = useHealth();
   return (
     <div className="border-t border-rail-line px-4 py-3">
       <div className="flex items-center gap-2">
@@ -181,13 +183,11 @@ function AccountBlock() {
         </div>
       </div>
       <div className="mono mt-2.5 text-[10px] leading-relaxed text-rail-muted">
-        <div>acct {AWS_ACCOUNT}</div>
-        <div>
-          {AWS_REGION} · {DEPLOYABLES.length} deployables
-        </div>
+        <div>acct {health?.account ?? "—"}</div>
+        <div>{health?.region ?? "—"}</div>
       </div>
-      <Badge tone="amber" className="mt-2">
-        P0 · mock data
+      <Badge tone={isMock ? "amber" : "green"} className="mt-2">
+        {isMock ? "P0 · mock data" : "live · read-only"}
       </Badge>
     </div>
   );

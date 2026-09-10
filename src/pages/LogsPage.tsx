@@ -59,9 +59,7 @@ export function LogsPage({
               >
                 <div className="min-w-0 flex-1">
                   <div className="mono truncate text-[12.5px] font-medium">{d.name}</div>
-                  <div className="mono text-[10.5px] text-muted-foreground">
-                    {d.functions.length} log groups
-                  </div>
+                  <div className="mono text-[10.5px] text-muted-foreground">{d.path}</div>
                 </div>
                 {absent ? (
                   <Badge tone="gray">no stack</Badge>

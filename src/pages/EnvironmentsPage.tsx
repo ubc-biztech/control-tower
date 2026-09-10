@@ -11,6 +11,7 @@ import { StatTiles } from "@/components/StatTiles";
 import { DeploymentCell } from "@/components/DeploymentCell";
 import type { MatrixResponse, Stage } from "@/lib/types";
 import { STAGES, cellKey } from "@/lib/types";
+import { relTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export function EnvironmentsPage({
@@ -123,6 +124,20 @@ export function EnvironmentsPage({
         </span>
       </div>
 
+      {data?.awaitingStackTags && (
+        <div className="shrink-0 px-5 pt-3">
+          <Callout tone="warning" title="No deployment carries a git SHA yet">
+            Stacks are tagged with <span className="mono">STAGE</span> and nothing else, so every
+            cell shows a timestamp instead of a commit. Adding{" "}
+            <span className="mono">stackTags</span> to the deploy pipeline is the one change
+            <span className="mono"> serverless-biztechapp</span> needs for this column to become
+            useful. Deploys made before that will stay blank.
+          </Callout>
+        </div>
+      )}
+
+      {data && data.unmanaged.length > 0 && <UnmanagedStacks stacks={data.unmanaged} />}
+
       {data?.stale && (
         <div className="shrink-0 px-5 pt-3">
           <Callout tone="warning" title="Showing last-known state">
@@ -163,7 +178,7 @@ export function EnvironmentsPage({
                         {d.name}
                       </Link>
                       <div className="mono mt-[2px] truncate text-[10.5px] text-muted-foreground">
-                        {d.path} · {d.functions.length} fn
+                        {d.path}
                       </div>
                     </TableCell>
                     {STAGES.map((stage) => (
@@ -192,6 +207,35 @@ export function EnvironmentsPage({
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+/** Stacks deployed in the account that no deployable claims (R1.2). */
+function UnmanagedStacks({ stacks }: { stacks: MatrixResponse["unmanaged"] }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="shrink-0 px-5 pt-3">
+      <Callout tone="info" title={`${stacks.length} deployed stacks are not in deployables.json`}>
+        AWS is the source of truth, so these are shown rather than hidden. Each is a{" "}
+        <span className="mono">{"{name}-{stage}"}</span> stack in the account that no deployable
+        claims — either a service that left the repo, or one that was never in it.{" "}
+        <button className="text-primary hover:underline" onClick={() => setOpen((v) => !v)}>
+          {open ? "Hide" : "Show"} them
+        </button>
+        {open && (
+          <div className="mono mt-2 grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-x-5 gap-y-1 text-[11px]">
+            {stacks.map((s) => (
+              <div key={s.stackName} className="flex items-center gap-2">
+                <span className="truncate">{s.stackName}</span>
+                <span className="ml-auto shrink-0 text-muted-foreground">
+                  {relTime(s.lastUpdated)} ago
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </Callout>
     </div>
   );
 }

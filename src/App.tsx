@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { HealthProvider } from "@/components/HealthProvider";
 import { LogsDrawer } from "@/components/LogsDrawer";
 import { RollbackDialog, type RollbackTarget } from "@/components/RollbackDialog";
 import { EnvironmentsPage } from "@/pages/EnvironmentsPage";
@@ -65,6 +66,7 @@ export default function App() {
 
   return (
     <TooltipProvider delayDuration={250}>
+      <HealthProvider>
       <AppLayout
         fetchedAt={matrix?.fetchedAt}
         stale={matrix?.stale}
@@ -125,7 +127,8 @@ export default function App() {
         onDispatched={() => void refresh()}
       />
 
-      <Toaster />
+        <Toaster />
+      </HealthProvider>
     </TooltipProvider>
   );
 }

@@ -47,15 +47,39 @@ export interface Deployable {
   path: string;
   stackPattern: string;
   stages: Stage[];
-  functions: string[];
+  /** Mock-only. The live path discovers functions from stack resources. */
+  functions?: string[];
+}
+
+export interface UnmanagedStack {
+  stackName: string;
+  stage: Stage;
+  cfnStatus: string;
+  lastUpdated: string;
 }
 
 export interface MatrixResponse {
   deployables: Deployable[];
   cells: Record<string, StackState>; // key: `${service}|${stage}`
+  /** Stacks deployed in the account that no deployable claims (R1.2). */
+  unmanaged: UnmanagedStack[];
   fetchedAt: string;
   /** True when AWS was unreachable and this is last-known state (R1.7). */
   stale: boolean;
+  /** True while no deployment anywhere carries git metadata yet (R1.3). */
+  awaitingStackTags: boolean;
+}
+
+/** What the server will and will not do, read once at startup. */
+export interface Health {
+  ok: boolean;
+  account?: string;
+  arn?: string;
+  region?: string;
+  readOnly?: boolean;
+  writesEnabled: boolean;
+  reason?: string;
+  source: "live" | "mock";
 }
 
 /** One entry from the stack's deployment bucket (`sls deploy list`). */
@@ -70,9 +94,12 @@ export interface Deployment {
    *  Past artifacts in S3 carry no SHA — see docs/v0-notes.md. */
   git: GitMeta | null;
   kind: "deploy" | "rollback";
-  actor: string;
+  actor: string | null;
   reason?: string;
   status: "succeeded" | "failed" | "in-progress";
+  /** serverless-state.json beside the artifact; carries this deploy's stack
+   *  tags once the pipeline stamps them. */
+  stateKey?: string | null;
 }
 
 export interface LogEvent {
@@ -87,6 +114,8 @@ export interface LogGroupRef {
   logGroup: string;
   consoleUrl: string;
   eventCount: number;
+  /** The log group does not exist: the function has never been invoked. */
+  missing?: boolean;
 }
 
 export interface LogsResponse {

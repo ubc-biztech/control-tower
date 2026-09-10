@@ -1,29 +1,32 @@
 # BizTech Control Tower — P0
 
-Internal control plane for UBC BizTech infrastructure. **This is P0: a proof of
-concept with a real UI and entirely fabricated data.** It exists to validate the
-screens in `docs/tower-requirements.md` §6 before a single line of AWS code is
-written.
+Internal control plane for UBC BizTech infrastructure. **Reads real AWS. Writes
+nothing.**
 
 ```
 npm install
-npm run dev        # http://localhost:5273
+cp .env.example .env     # add AWS credentials
+npm run dev              # http://localhost:5273
 ```
 
-No `.env` is needed. Nothing to configure.
+`npm run dev` serves the UI and the read-only API from one process. Credentials
+stay in Node; the browser never sees them. Without credentials, run the
+fabricated world instead:
+
+```
+VITE_TOWER_DATA_SOURCE=mock npm run dev
+```
 
 ---
 
 ## What this build does
 
-Three v0 screens, wired to a mock world of all 20 `serverless-biztechapp`
-services across `dev` / `staging` / `prod`:
-
 | Req | Screen | State |
 |---|---|---|
-| R1 | **Environments** — service × environment matrix, SHA + commit message, deployed-at, actor, run link, status | UI complete, mock data |
-| R2 | **Rollback** — confirm dialog with from → to, reason, the exact command, then a live run progress panel | UI complete, simulated Actions run |
-| R3 | **Logs** — merged last-10-minute stream across every Lambda in a stack, filter, 10s auto-refresh, console + Insights deep links | UI complete, generated events |
+| R1 | **Environments** — service × environment matrix from CloudFormation stack tags, plus stacks in the account no deployable claims | **Live** |
+| R1.5 | **Deployment history** — the last 5 artifacts from each stack's deployment bucket | **Live** |
+| R3 | **Logs** — last 10 minutes across every Lambda in a stack, discovered from stack resources, filter, 10s auto-refresh, console + Insights deep links | **Live** |
+| R2 | **Rollback** — the confirm dialog exists and shows real from → to, but the button is disabled and the route returns 501 | **Not built** — it is the write path |
 
 Plus a per-environment view (one stage, every service), a **Services** inventory
 showing that adding a deployable is a config entry (R9.3), and a left rail with
@@ -31,17 +34,21 @@ the v1 sections greyed out.
 
 ## What this build does **not** do
 
-- **It makes zero network calls.** No AWS SDK, no Octokit, no `fetch`. Nothing
-  is installed that could reach account `432714361962`.
-- It holds no credentials. `.env.example` lists what the real v0 server will
-  need, commented out, for reference only.
-- It does not touch `serverless-biztechapp` or `bt-web-v2`. The stack-tag change
-  and `rollback.yml` from the agent brief were **not** made — see
-  `docs/p0-notes.md`.
-- Nothing is persisted. Reload resets the world, including any rollback you ran.
+- **No writes to AWS.** Six read commands exist in the whole tree and a build
+  check fails if a seventh appears. See **[docs/read-only.md](docs/read-only.md)**.
+- **No rollback.** `POST /api/rollback` returns 501; the UI disables the button
+  and says why. Rollback belongs in GitHub Actions (R2.3) and needs open
+  question 10.2 answered first.
+- **No auth.** Single user, no login. That is R6, v1.
+- **No database, no log storage.** State is AWS. The cache is in memory with a
+  30-second TTL.
+- It does not touch `serverless-biztechapp` or `bt-web-v2`.
 
-The read-only rule from the requirements is enforced here by the strongest
-possible means: there is no code capable of writing anything.
+## Read this before running it against AWS
+
+The credentials in use are **root account access keys**, not a scoped IAM user.
+`docs/read-only.md` has the policy for the read-only user to create instead, and
+`docs/step0-findings.md` explains why it matters.
 
 ## Where things live
 
@@ -93,22 +100,39 @@ Conventions: one exported component per file, file name matches it. Pages are
 `<Thing>Page.tsx` exporting `<Thing>Page`. Shared primitives live in
 `components/ui/`; anything with product knowledge in it lives a level up.
 
-### Swapping in the real backend
+### The server
 
-Everything that would talk to AWS is behind `src/lib/api.ts`. Its five functions
-map one-to-one onto the routes in the brief:
+`server/` holds everything that talks to AWS. It runs inside the Vite dev server
+as middleware, so `npm run dev` is one process, and standalone via
+`npm run serve:api` for deployment later.
 
-| `api.ts` | Route |
+```
+server/
+  handler.ts        the routes
+  config.ts         env, .env loading, deployable inventory
+  cache.ts          30s TTL, collapses concurrent misses
+  aws/
+    clients.ts      the read-only boundary
+    stacks.ts       GET /api/matrix
+    resources.ts    function + deployment-bucket discovery, 5min TTL
+    deployments.ts  GET /api/deployments
+    logs.ts         GET /api/logs, console + Insights URLs
+```
+
+| Route | Reads |
 |---|---|
-| `getMatrix()` | `GET /api/matrix` |
-| `getDeployments(service, stage)` | `GET /api/deployments?service=&stage=` |
-| `getLogs(service, stage, filter)` | `GET /api/logs?service=&stage=&filter=` |
-| `postRollback({...})` | `POST /api/rollback` |
-| `getRollbackRun(runId)` | `GET /api/rollback/:runId` |
+| `GET /api/health` | `sts:GetCallerIdentity` — account, region, capabilities |
+| `GET /api/matrix` | one `DescribeStacks` pass over the account |
+| `GET /api/deployments?service=&stage=` | `ListStackResources` → `ListObjectsV2` |
+| `GET /api/logs?service=&stage=&filter=` | `ListStackResources` → `FilterLogEvents` per group |
+| `GET /api/functions?service=&stage=` | `ListStackResources` |
+| `POST /api/rollback` | nothing — returns 501 |
 
-Replace those five bodies with `fetch` and delete `src/mock/`. No component
-imports the mock directly except for the static `deployables.json` inventory
-and the AWS account/region constants.
+The whole matrix costs one `DescribeStacks` pagination rather than 60 named
+lookups, because that call returns every stack with its tags.
+
+`src/lib/api.ts` picks between `liveApi.ts` and `mockApi.ts`; no screen knows
+which it got.
 
 ## Adding a deployable
 

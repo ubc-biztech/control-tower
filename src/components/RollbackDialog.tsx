@@ -27,6 +27,7 @@ import { ApiError, getDeployments, getRollbackRun, postRollback } from "@/lib/ap
 import type { Deployment, RollbackRun, Stage } from "@/lib/types";
 import { absTime, bytes, firstLine, relTime, shortSha } from "@/lib/format";
 import { DEPLOYABLES } from "@/mock/world";
+import { useRollbackBlockedReason } from "@/components/HealthProvider";
 import { cn } from "@/lib/utils";
 
 export interface RollbackTarget {
@@ -92,6 +93,7 @@ export function RollbackDialog({
   const current = useMemo(() => deployments?.find((d) => d.current) ?? null, [deployments]);
   const candidates = useMemo(() => (deployments ?? []).filter((d) => !d.current), [deployments]);
 
+  const blocked = useRollbackBlockedReason();
   const isProd = target?.stage === "prod";
   const servicePath = target ? servicePathFor(target.service) : "";
 
@@ -197,7 +199,13 @@ export function RollbackDialog({
                 </pre>
               </Callout>
 
-              {isProd && (
+              {blocked && (
+                <Callout tone="warning" className="mt-2" title="Read-only build">
+                  {blocked}
+                </Callout>
+              )}
+
+              {isProd && !blocked && (
                 <Callout tone="danger" className="mt-2">
                   This redeploys a stored artifact to <b>production</b>. Traffic shifts as soon as
                   the stack finishes updating.
@@ -238,7 +246,8 @@ export function RollbackDialog({
               <Button
                 variant={isProd ? "danger" : "primary"}
                 loading={submitting}
-                disabled={!selected || !deployments}
+                disabled={!selected || !deployments || Boolean(blocked)}
+                title={blocked ?? undefined}
                 onClick={confirm}
               >
                 {!submitting && <Undo2 className="h-3.5 w-3.5" />}
